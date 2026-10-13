@@ -1,0 +1,137 @@
+@model List<ERP_Core.Models.WarehouseLot>
+
+@{
+    ViewData["Title"] = "Warehouse Stock Position Report";
+    ViewData["SubTitle"] = "Lot-wise mojuda maal, in/out summary aur agle rent ki tareekh.";
+}
+
+<div class="toolbar">
+    <div style="display:flex;gap:10px;align-items:center;">
+        <button onclick="window.print()" class="btn" style="background:var(--surface2);color:var(--text);">
+            <i class="fa fa-print me-1"></i> Print Report
+        </button>
+        <a asp-action="Inward" class="btn brass">
+            <i class="fa fa-truck-loading me-1"></i> Inward Entry
+        </a>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="get" asp-action="StockReport" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <select name="partyId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
+            <option value="">-- Tamam Parties --</option>
+            @if (ViewBag.Parties != null)
+            {
+                foreach (var p in ViewBag.Parties)
+                {
+                    <option value="@p.Id" selected="@(ViewBag.SelectedPartyId == p.Id ? "selected" : null)">@p.Name</option>
+                }
+            }
+        </select>
+        <select name="productId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
+            <option value="">-- Tamam Products --</option>
+            @if (ViewBag.Products != null)
+            {
+                foreach (var pr in ViewBag.Products)
+                {
+                    <option value="@pr.Id" selected="@(ViewBag.SelectedProductId == pr.Id ? "selected" : null)">@pr.Name</option>
+                }
+            }
+        </select>
+        <select name="status" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
+            <option value="Active" selected="@(ViewBag.SelectedStatus == "Active" ? "selected" : null)">Active Stock Only</option>
+            <option value="Closed" selected="@(ViewBag.SelectedStatus == "Closed" ? "selected" : null)">Closed / Nil Stock</option>
+            <option value="All" selected="@(ViewBag.SelectedStatus == "All" ? "selected" : null)">All Lots</option>
+        </select>
+    </form>
+</div>
+
+<!-- Summary Metrics Cards -->
+@{
+    decimal totalInwardQty = Model?.Sum(l => l.OriginalQty) ?? 0;
+    decimal totalRemainingQty = Model?.Sum(l => l.CurrentRemainingQty) ?? 0;
+    decimal totalOutwardQty = totalInwardQty - totalRemainingQty;
+    decimal monthlyRentPotential = Model?.Where(l => l.Status == "Active").Sum(l => l.CurrentRemainingQty * l.MonthlyRentRate) ?? 0;
+}
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:20px;">
+    <div style="background:var(--surface);border:1px solid var(--border-soft);padding:16px;border-radius:10px;">
+        <span style="font-size:11.5px;color:var(--text-dim);display:block;">Total Inward Quantity:</span>
+        <b style="font-size:20px;color:var(--text);">@totalInwardQty.ToString("N0")</b>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border-soft);padding:16px;border-radius:10px;">
+        <span style="font-size:11.5px;color:var(--text-dim);display:block;">Total Dispatched (Out):</span>
+        <b style="font-size:20px;color:var(--red);">@totalOutwardQty.ToString("N0")</b>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border-soft);padding:16px;border-radius:10px;border-left:4px solid var(--green);">
+        <span style="font-size:11.5px;color:var(--text-dim);display:block;">Current Remaining Balance:</span>
+        <b style="font-size:22px;color:var(--green);">@totalRemainingQty.ToString("N0")</b>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border-soft);padding:16px;border-radius:10px;border-left:4px solid var(--brass);">
+        <span style="font-size:11.5px;color:var(--text-dim);display:block;">Monthly Rent Potential:</span>
+        <b style="font-size:20px;color:var(--brass);">Rs @monthlyRentPotential.ToString("N0")</b>
+    </div>
+</div>
+
+<!-- Stock Table -->
+<div class="table-card" style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;overflow-x:auto;">
+    <table class="table" style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead>
+            <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
+                <th style="padding:10px 8px;">Lot No</th>
+                <th style="padding:10px 8px;">Inward Date</th>
+                <th style="padding:10px 8px;">Party</th>
+                <th style="padding:10px 8px;">Product</th>
+                <th style="padding:10px 8px;">Location</th>
+                <th style="padding:10px 8px;text-align:right;">Inward Qty</th>
+                <th style="padding:10px 8px;text-align:right;">Out Qty</th>
+                <th style="padding:10px 8px;text-align:right;">Remaining Balance</th>
+                <th style="padding:10px 8px;text-align:right;">Rate / Mo</th>
+                <th style="padding:10px 8px;">Next Bill Due</th>
+                <th style="padding:10px 8px;text-align:center;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var lot in Model)
+                {
+                    decimal outForLot = lot.OriginalQty - lot.CurrentRemainingQty;
+                    <tr style="border-bottom:1px solid var(--border-soft);">
+                        <td style="padding:10px 8px;font-weight:600;color:var(--brass);">@lot.LotNo</td>
+                        <td style="padding:10px 8px;">@lot.InwardDate.ToString("dd-MMM-yyyy")</td>
+                        <td style="padding:10px 8px;font-weight:600;">@(lot.Party?.Name ?? "N/A")</td>
+                        <td style="padding:10px 8px;">@(lot.Product?.Name ?? "N/A")</td>
+                        <td style="padding:10px 8px;color:var(--text-dim);">@(lot.BayOrLocation ?? "-")</td>
+                        <td style="padding:10px 8px;text-align:right;">@lot.OriginalQty.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:right;color:var(--red);">@outForLot.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:right;font-weight:700;color:var(--green);font-size:13px;">
+                            @lot.CurrentRemainingQty.ToString("N0")
+                        </td>
+                        <td style="padding:10px 8px;text-align:right;">Rs @lot.MonthlyRentRate.ToString("N0")</td>
+                        <td style="padding:10px 8px;color:@(lot.NextBillingDate <= DateTime.Today && lot.CurrentRemainingQty > 0 ? "var(--red)" : "var(--text)");">
+                            @lot.NextBillingDate.ToString("dd-MMM-yyyy")
+                        </td>
+                        <td style="padding:10px 8px;text-align:center;">
+                            @if (lot.Status == "Active")
+                            {
+                                <span style="background:var(--green-dim);color:var(--green-text);padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;">Active</span>
+                            }
+                            else
+                            {
+                                <span style="background:var(--surface2);color:var(--text-dim);padding:3px 8px;border-radius:12px;font-size:11px;">Nil Stock</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="11" style="padding:24px;text-align:center;color:var(--text-dim);">
+                        Koi Stock record nahi mila.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,167 @@
+@model ERP_Core.Dtos.LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Sign In — West Wharf Warehouse";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>West Wharf Warehouse — Godown Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/aarhat-theme.css" asp-append-version="true" />
+</head>
+<body>
+
+<div class="login-screen-wrap" id="loginScreen">
+    
+    <!-- Left Brand & Hero Art Pane -->
+    <div class="login-brand">
+        <svg class="net-pattern" viewBox="0 0 600 800" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="#C68A3E" stroke-width="1" fill="none">
+                <circle cx="520" cy="120" r="170" opacity=".14"/>
+                <circle cx="520" cy="120" r="110" opacity=".14"/>
+                <circle cx="60" cy="700" r="150" stroke="#2F9E8C" opacity=".16"/>
+                <circle cx="60" cy="700" r="95" stroke="#2F9E8C" opacity=".16"/>
+            </g>
+        </svg>
+
+        <div>
+            <div class="brand-mark">
+                <span class="warehouse-mark" style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:rgba(198,138,62,0.15);border:1px solid rgba(198,138,62,0.35);border-radius:10px;padding:5px;">
+                    <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24 4L6 14L24 24L42 14L24 4Z" fill="rgba(198,138,62,0.3)" stroke="var(--brass)" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M6 14V36L24 46V24L6 14Z" fill="rgba(47,158,140,0.25)" stroke="var(--teal)" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M42 14V36L24 46V24L42 14Z" fill="rgba(198,138,62,0.15)" stroke="var(--brass)" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M15 29L24 34L33 29" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15 20L24 25L33 20" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <div>
+                    <div class="brand-name">WEST WHARF <span>WAREHOUSE</span></div>
+                    <div class="brand-tag">DRY STORAGE &amp; GODOWN LOGISTICS · KARACHI</div>
+                </div>
+            </div>
+
+            <div class="login-hero" style="margin-top:70px;">
+                <div class="eyebrow">Warehouse Management System (WMS)</div>
+                <h1>Har lot ka stock, <br>har mahiney ka rent.</h1>
+                <p>Stock Inward, Outward Gate Pass, Lifter services aur rolling monthly rent billing — sab ek jagah. Godown storage aur accounting ka rozana kaam ab poori tarah digital.</p>
+            </div>
+
+            <div class="hero-stats">
+                <div><b>Lot-wise</b><span>Stock storage</span></div>
+                <div><b>Lifter</b><span>Handling log</span></div>
+                <div><b>Monthly</b><span>Rent billing</span></div>
+            </div>
+        </div>
+
+        <div class="login-foot">&copy; @DateTime.Now.Year West Wharf Warehouse &middot; Developed By Awais Qureshi</div>
+    </div>
+
+    <!-- Right Sign-In Panel -->
+    <div class="login-panel">
+        <div class="login-card">
+            
+            <!-- Tab Switcher -->
+            <div class="login-tabs">
+                <button type="button" id="tabOwnerBtn" class="active" onclick="switchLoginTab('owner')">Owner login</button>
+                <button type="button" id="tabStaffBtn" onclick="switchLoginTab('staff')">Staff login</button>
+            </div>
+
+            <!-- Error Notification -->
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div style="background:var(--red-dim);color:var(--red-text);padding:10px 14px;border-radius:8px;font-size:12.5px;margin-bottom:18px;border:1px solid var(--border);">
+                    @TempData["ErrorMessage"]
+                </div>
+            }
+
+            <!-- Owner Form -->
+            <form asp-controller="Login" asp-action="QuickLogin" method="post" id="ownerLoginForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="role" value="Owner" />
+                <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+
+                <h2>Owner panel</h2>
+                <div class="sub">Poora business ek nazar mein dekhein.</div>
+                
+                <div class="field">
+                    <label>Username / Email</label>
+                    <input type="text" name="username" placeholder="Username or email" autocomplete="off" required>
+                </div>
+                
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+                </div>
+                
+                <div class="row-between">
+                    <label><input type="checkbox" style="accent-color:var(--brass);"> Yaad rakhein</label>
+                    <button type="button" class="link-btn">Password bhool gaye?</button>
+                </div>
+                
+                <button type="submit" class="btn-primary">Sign in as Owner</button>
+            </form>
+
+            <!-- Staff Form -->
+            <form asp-controller="Login" asp-action="QuickLogin" method="post" id="staffLoginForm" style="display:none;">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="role" value="Staff" />
+                <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+
+                <h2>Staff panel</h2>
+                <div class="sub">Bill banayein, lot darj karein.</div>
+                
+                <div class="field">
+                    <label>Username / Employee</label>
+                    <input type="text" name="username" placeholder="Username or employee code" autocomplete="off" required>
+                </div>
+                
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+                </div>
+                
+                <div class="row-between">
+                    <label><input type="checkbox" style="accent-color:var(--brass);"> Yaad rakhein</label>
+                    <button type="button" class="link-btn">Password bhool gaye?</button>
+                </div>
+                
+                <button type="submit" class="btn-primary">Sign in as Staff</button>
+            </form>
+
+                <div class="login-demo" style="margin-top:22px;border-top:1px solid var(--border-soft);padding-top:14px;text-align:center;">
+                    <b>Developed By</b> — <b style="color:var(--brass-text);font-size:13px;">Awais Qureshi</b>
+                </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchLoginTab(tab) {
+    const ownerBtn = document.getElementById('tabOwnerBtn');
+    const staffBtn = document.getElementById('tabStaffBtn');
+    const ownerForm = document.getElementById('ownerLoginForm');
+    const staffForm = document.getElementById('staffLoginForm');
+
+    if (tab === 'owner') {
+        ownerBtn.classList.add('active');
+        staffBtn.classList.remove('active');
+        ownerForm.style.display = 'block';
+        staffForm.style.display = 'none';
+    } else {
+        staffBtn.classList.add('active');
+        ownerBtn.classList.remove('active');
+        staffForm.style.display = 'block';
+        ownerForm.style.display = 'none';
+    }
+}
+</script>
+
+</body>
+</html>

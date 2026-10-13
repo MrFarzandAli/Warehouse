@@ -1,0 +1,209 @@
+@model List<ERP_Core.Models.WarehouseLifterUsage>
+
+@{
+    ViewData["Title"] = "Lifter Usage & Log";
+    ViewData["SubTitle"] = "Lifter / Forklift ka rozana istemaal aur party-wise billing track karein.";
+}
+
+<div class="toolbar">
+    <div style="display:flex;gap:10px;align-items:center;">
+        <button type="button" class="btn brass" onclick="toggleLifterModal()">
+            <i class="fa fa-plus me-1"></i> Add Lifter Job / Usage
+        </button>
+        <a asp-action="Billing" class="btn" style="background:var(--surface2);color:var(--text);">
+            <i class="fa fa-file-invoice-dollar me-1"></i> Monthly Rent & Lifter Billing
+        </a>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="get" asp-action="Lifter" style="display:flex;gap:10px;align-items:center;">
+        <select name="partyId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
+            <option value="">-- Tamam Parties --</option>
+            @if (ViewBag.Parties != null)
+            {
+                foreach (var p in ViewBag.Parties)
+                {
+                    <option value="@p.Id" selected="@(ViewBag.SelectedPartyId == p.Id ? "selected" : null)">@p.Name</option>
+                }
+            }
+        </select>
+        <select name="status" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
+            <option value="All" selected="@(ViewBag.SelectedStatus == "All" ? "selected" : null)">All Usages</option>
+            <option value="Unbilled" selected="@(ViewBag.SelectedStatus == "Unbilled" ? "selected" : null)">Unbilled Only (Pending)</option>
+            <option value="Billed" selected="@(ViewBag.SelectedStatus == "Billed" ? "selected" : null)">Billed Only</option>
+        </select>
+    </form>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div style="background:var(--green-dim);color:var(--green-text);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;border:1px solid var(--border);">
+        <i class="fa fa-check-circle me-1"></i> @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div style="background:var(--red-dim);color:var(--red-text);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;border:1px solid var(--border);">
+        <i class="fa fa-exclamation-triangle me-1"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Add Lifter Entry Form -->
+<div class="form-card" id="lifterEntryForm" style="display:none;background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;margin-bottom:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h4 style="color:var(--brass);font-size:15px;font-weight:600;margin:0;">
+            <i class="fa fa-pallet me-1"></i> Record Lifter / Forklift Service
+        </h4>
+        <button type="button" class="btn" onclick="toggleLifterModal()" style="padding:4px 8px;font-size:11px;background:transparent;color:var(--text-dim);">&times; Close</button>
+    </div>
+
+    <form asp-action="CreateLifterUsage" method="post">
+        @Html.AntiForgeryToken()
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;">
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Usage Date *</label>
+                <input type="date" name="UsageDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Party / Customer *</label>
+                <select name="PartyId" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                    <option value="">-- Party Select Karein --</option>
+                    @if (ViewBag.Parties != null)
+                    {
+                        foreach (var p in ViewBag.Parties)
+                        {
+                            <option value="@p.Id">@p.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Associated Lot (Optional)</label>
+                <select name="LotId" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                    <option value="">-- No Lot Linked (General Lifter Work) --</option>
+                    @if (ViewBag.ActiveLots != null)
+                    {
+                        foreach (var l in ViewBag.ActiveLots)
+                        {
+                            <option value="@l.LotId">@l.LotNo (@l.PartyName)</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Charging Basis (Type)</label>
+                <select name="UsageType" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                    <option value="Hours">Hours (Ghante)</option>
+                    <option value="Trips">Trips / Vehicles</option>
+                    <option value="Lifting">Per Lifting / Pallets</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Hours / Trips / Qty *</label>
+                <input type="number" step="any" min="0.5" name="QuantityOrHours" id="lifterQty" value="1" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="updateLifterTotal()" />
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Lifter Rate (Rs) *</label>
+                <input type="number" step="any" min="0" name="Rate" id="lifterUnitRate" placeholder="e.g. 1500" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="updateLifterTotal()" />
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Total Amount (Preview)</label>
+                <input type="text" id="lifterTotalPreview" readonly style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--brass);font-size:13px;font-weight:700;" value="Rs 0.00" />
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Operator / Driver Name</label>
+                <input type="text" name="OperatorName" placeholder="e.g. Aslam" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+        </div>
+
+        <div class="field" style="margin:14px 0;">
+            <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Remarks</label>
+            <input type="text" name="Remarks" placeholder="Internal shifting, bay clearance, etc." style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+        </div>
+
+        <div style="text-align:right;">
+            <button type="button" class="btn" onclick="toggleLifterModal()" style="background:var(--surface2);color:var(--text);margin-right:8px;">Cancel</button>
+            <button type="submit" class="btn brass" style="padding:8px 24px;">
+                <i class="fa fa-save me-1"></i> Save Lifter Usage
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Table Card -->
+<div class="table-card" style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;overflow-x:auto;">
+    <table class="table" style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead>
+            <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
+                <th style="padding:10px 8px;">Date</th>
+                <th style="padding:10px 8px;">Party</th>
+                <th style="padding:10px 8px;">Lot Linked</th>
+                <th style="padding:10px 8px;">Basis</th>
+                <th style="padding:10px 8px;text-align:right;">Hours / Qty</th>
+                <th style="padding:10px 8px;text-align:right;">Rate</th>
+                <th style="padding:10px 8px;text-align:right;">Total Amount</th>
+                <th style="padding:10px 8px;">Operator</th>
+                <th style="padding:10px 8px;text-align:center;">Billing Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <tr style="border-bottom:1px solid var(--border-soft);">
+                        <td style="padding:10px 8px;">@item.UsageDate.ToString("dd-MMM-yyyy")</td>
+                        <td style="padding:10px 8px;font-weight:600;">@(item.Party?.Name ?? "N/A")</td>
+                        <td style="padding:10px 8px;color:var(--brass);">@(item.Lot?.LotNo ?? "General")</td>
+                        <td style="padding:10px 8px;">@item.UsageType</td>
+                        <td style="padding:10px 8px;text-align:right;font-weight:600;">@item.QuantityOrHours.ToString("N1")</td>
+                        <td style="padding:10px 8px;text-align:right;">Rs @item.Rate.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:right;font-weight:700;color:var(--brass);">Rs @item.TotalAmount.ToString("N0")</td>
+                        <td style="padding:10px 8px;color:var(--text-dim);">@(item.OperatorName ?? "-")</td>
+                        <td style="padding:10px 8px;text-align:center;">
+                            @if (item.BilledStatus == "Unbilled")
+                            {
+                                <span style="background:var(--amber-dim);color:var(--amber-text);padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;">Pending Bill</span>
+                            }
+                            else
+                            {
+                                <span style="background:var(--green-dim);color:var(--green-text);padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;">Billed (Bill #@item.BillId)</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" style="padding:24px;text-align:center;color:var(--text-dim);">
+                        Koi Lifter Usage record nahi mila.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+<script>
+function toggleLifterModal() {
+    const form = document.getElementById('lifterEntryForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function updateLifterTotal() {
+    const qty = parseFloat(document.getElementById('lifterQty').value) || 0;
+    const rate = parseFloat(document.getElementById('lifterUnitRate').value) || 0;
+    const total = qty * rate;
+    document.getElementById('lifterTotalPreview').value = 'Rs ' + total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+}
+</script>
+}

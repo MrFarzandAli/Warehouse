@@ -1,0 +1,273 @@
+@model List<ERP_Core.Models.WarehouseStockOutward>
+
+@{
+    ViewData["Title"] = "Outward (Stock Out / Gate Pass)";
+    ViewData["SubTitle"] = "Lot select karke maal out karein — remaining stock auto calculate hoga.";
+}
+
+<div class="toolbar">
+    <div style="display:flex;gap:10px;align-items:center;">
+        <button type="button" class="btn brass" onclick="toggleOutwardForm()">
+            <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Naya Maal Out Karein (Gate Pass)
+        </button>
+        <a asp-action="Inward" class="btn" style="background:var(--surface2);color:var(--text);">
+            <i class="fa fa-truck-loading me-1"></i> Inward Lots
+        </a>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="get" asp-action="Outward" style="display:flex;gap:10px;align-items:center;">
+        <select name="partyId" class="searchable-select" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
+            <option value="">-- Tamam Parties --</option>
+            @if (ViewBag.Parties != null)
+            {
+                foreach (var p in ViewBag.Parties)
+                {
+                    <option value="@p.Id">@p.Name</option>
+                }
+            }
+        </select>
+    </form>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div style="background:var(--green-dim);color:var(--green-text);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;border:1px solid var(--border);">
+        <i class="fa fa-check-circle me-1"></i> @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div style="background:var(--red-dim);color:var(--red-text);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;border:1px solid var(--border);">
+        <i class="fa fa-exclamation-triangle me-1"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Outward Entry Collapsible Form -->
+<div class="form-card" id="outwardEntryForm" style="display:none;background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;margin-bottom:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h4 style="color:var(--brass);font-size:15px;font-weight:600;margin:0;">
+            <i class="fa fa-dolly me-1"></i> Maal Release / Outward Entry
+        </h4>
+        <button type="button" class="btn" onclick="toggleOutwardForm()" style="padding:4px 8px;font-size:11px;background:transparent;color:var(--text-dim);">&times; Close</button>
+    </div>
+
+    <form asp-action="CreateOutward" method="post" id="mainOutwardForm">
+        @Html.AntiForgeryToken()
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:15px;">
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Outward Date *</label>
+                <input type="date" name="OutwardDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+
+            <div class="field" style="grid-column: span 2;">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Select Lot * (Jisme se maal nikaalna hai)</label>
+                <select name="LotId" id="lotSelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" onchange="onLotSelected()">
+                    <option value="">-- Active Lot Select Karein --</option>
+                    @if (ViewBag.ActiveLots != null)
+                    {
+                        foreach (var l in ViewBag.ActiveLots)
+                        {
+                            <option value="@l.LotId">@l.LotNo — @l.PartyName — @l.ProductName (Mojuda Stock: @l.CurrentRemainingQty)</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <!-- Selected Lot Live Info Card -->
+        <div id="lotInfoCard" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin:16px 0;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:12px;">
+                <div>
+                    <span style="font-size:11px;color:var(--text-dim);display:block;">Party Name:</span>
+                    <b id="cardParty" style="font-size:13px;color:var(--text);">--</b>
+                </div>
+                <div>
+                    <span style="font-size:11px;color:var(--text-dim);display:block;">Product:</span>
+                    <b id="cardProduct" style="font-size:13px;color:var(--text);">--</b>
+                </div>
+                <div>
+                    <span style="font-size:11px;color:var(--text-dim);display:block;">Inward Date:</span>
+                    <span id="cardInwardDate" style="font-size:13px;color:var(--text);">--</span>
+                </div>
+                <div>
+                    <span style="font-size:11px;color:var(--text-dim);display:block;">Available Remaining Stock:</span>
+                    <b id="cardAvailableQty" style="font-size:16px;color:var(--green);">0</b>
+                </div>
+                <div>
+                    <span style="font-size:11px;color:var(--text-dim);display:block;">Monthly Rate / Unit:</span>
+                    <span id="cardRate" style="font-size:13px;color:var(--text);">Rs 0</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-top:14px;">
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Out Quantity (Qty nikaalni hai) *</label>
+                <input type="number" step="any" min="1" name="OutQty" id="outQty" placeholder="e.g. 20" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="calculateBalancePreview()" />
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">New Remaining Stock (Preview)</label>
+                <input type="text" id="previewRemainingAfter" readonly style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--brass);font-size:13px;font-weight:700;" value="--" />
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Gate Pass No (Optional)</label>
+                <input type="text" name="GatePassNo" placeholder="e.g. GP-0124" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Receiver Person / Driver</label>
+                <input type="text" name="ReceiverName" placeholder="Receiver ka naam" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Vehicle No</label>
+                <input type="text" name="VehicleNo" placeholder="e.g. JU-5432" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+        </div>
+
+        <!-- Lifter Option -->
+        <div style="border:1px dashed var(--border);padding:12px 16px;border-radius:8px;margin:16px 0;background:rgba(212,175,55,0.03);">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--text);cursor:pointer;">
+                <input type="checkbox" name="UseLifter" id="useLifterOutCheck" value="true" style="accent-color:var(--brass);width:16px;height:16px;" onchange="toggleLifterOutFields()" />
+                Is Outward Loading par Lifter / Forklift use hua? (Add Lifter Rent)
+            </label>
+
+            <div id="lifterOutFields" style="display:none;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-top:12px;">
+                <div>
+                    <label style="font-size:11px;color:var(--text-dim);display:block;margin-bottom:2px;">Lifter Hours / Trips</label>
+                    <input type="number" step="any" min="0.5" name="LifterQtyOrHours" value="1" style="width:100%;padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" />
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--text-dim);display:block;margin-bottom:2px;">Lifter Rate (Rs)</label>
+                    <input type="number" step="any" min="0" name="LifterRate" placeholder="e.g. 1500" style="width:100%;padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" />
+                </div>
+            </div>
+        </div>
+
+        <div class="field" style="margin-bottom:16px;">
+            <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Remarks</label>
+            <input type="text" name="Remarks" placeholder="Maal ki halat, delivery instructions etc." style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+        </div>
+
+        <div style="text-align:right;">
+            <button type="button" class="btn" onclick="toggleOutwardForm()" style="background:var(--surface2);color:var(--text);margin-right:8px;">Cancel</button>
+            <button type="submit" class="btn brass" style="padding:8px 24px;">
+                <i class="fa fa-check me-1"></i> Confirm & Issue Gate Pass
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Table Card -->
+<div class="table-card" style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;overflow-x:auto;">
+    <table class="table" style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead>
+            <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
+                <th style="padding:10px 8px;">Outward No</th>
+                <th style="padding:10px 8px;">Date</th>
+                <th style="padding:10px 8px;">Lot No</th>
+                <th style="padding:10px 8px;">Party</th>
+                <th style="padding:10px 8px;">Product</th>
+                <th style="padding:10px 8px;text-align:right;">Out Qty</th>
+                <th style="padding:10px 8px;text-align:right;">Remaining After</th>
+                <th style="padding:10px 8px;">Gate Pass No</th>
+                <th style="padding:10px 8px;">Receiver / Vehicle</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var outItem in Model)
+                {
+                    <tr style="border-bottom:1px solid var(--border-soft);">
+                        <td style="padding:10px 8px;font-weight:600;color:var(--brass);">@outItem.OutwardNo</td>
+                        <td style="padding:10px 8px;">@outItem.OutwardDate.ToString("dd-MMM-yyyy")</td>
+                        <td style="padding:10px 8px;font-weight:600;">@(outItem.Lot?.LotNo ?? "N/A")</td>
+                        <td style="padding:10px 8px;">@(outItem.Party?.Name ?? "N/A")</td>
+                        <td style="padding:10px 8px;">@(outItem.Lot?.Product?.Name ?? "N/A")</td>
+                        <td style="padding:10px 8px;text-align:right;font-weight:700;color:var(--red);">
+                            -@outItem.OutQty.ToString("N0")
+                        </td>
+                        <td style="padding:10px 8px;text-align:right;font-weight:600;color:var(--green);">
+                            @outItem.RemainingQtyAfter.ToString("N0")
+                        </td>
+                        <td style="padding:10px 8px;">@(outItem.GatePassNo ?? "-")</td>
+                        <td style="padding:10px 8px;color:var(--text-dim);">
+                            @(outItem.ReceiverName ?? "") @(!string.IsNullOrEmpty(outItem.VehicleNo) ? $"({outItem.VehicleNo})" : "")
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" style="padding:24px;text-align:center;color:var(--text-dim);">
+                        Koi Outward entry nahi mili.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+<script>
+let currentMaxStock = 0;
+
+function toggleOutwardForm() {
+    const form = document.getElementById('outwardEntryForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleLifterOutFields() {
+    const check = document.getElementById('useLifterOutCheck');
+    const fields = document.getElementById('lifterOutFields');
+    fields.style.display = check.checked ? 'grid' : 'none';
+}
+
+async function onLotSelected() {
+    const lotId = document.getElementById('lotSelect').value;
+    const card = document.getElementById('lotInfoCard');
+    if (!lotId) {
+        card.style.display = 'none';
+        currentMaxStock = 0;
+        return;
+    }
+
+    try {
+        const response = await fetch(`/Warehouse/GetLotDetails/${lotId}`);
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('cardParty').innerText = data.partyName;
+            document.getElementById('cardProduct').innerText = data.productName;
+            document.getElementById('cardInwardDate').innerText = data.inwardDate;
+            document.getElementById('cardAvailableQty').innerText = data.currentRemainingQty;
+            document.getElementById('cardRate').innerText = 'Rs ' + data.monthlyRentRate;
+            
+            currentMaxStock = data.currentRemainingQty;
+            card.style.display = 'block';
+
+            document.getElementById('outQty').max = currentMaxStock;
+            calculateBalancePreview();
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function calculateBalancePreview() {
+    const outQty = parseFloat(document.getElementById('outQty').value) || 0;
+    if (outQty > currentMaxStock && currentMaxStock > 0) {
+        alert('Out quantity mojuda stock (' + currentMaxStock + ') se zyada nahi ho sakti!');
+        document.getElementById('outQty').value = currentMaxStock;
+    }
+    const safeOut = parseFloat(document.getElementById('outQty').value) || 0;
+    const balance = currentMaxStock - safeOut;
+    document.getElementById('previewRemainingAfter').value = balance >= 0 ? balance : 0;
+}
+</script>
+}

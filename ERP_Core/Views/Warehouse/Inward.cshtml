@@ -1,0 +1,253 @@
+@model List<ERP_Core.Models.WarehouseLot>
+
+@{
+    ViewData["Title"] = "Inward Lots (Stock In)";
+    ViewData["SubTitle"] = "Party-wise maal inward karein, monthly rate aur lot assign karein.";
+}
+
+<div class="toolbar">
+    <div style="display:flex;gap:10px;align-items:center;">
+        <button type="button" class="btn brass" onclick="toggleLotForm()">
+            <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Naya Maal Inward Karein (New Lot)
+        </button>
+        <a asp-action="StockReport" class="btn" style="background:var(--surface2);color:var(--text);">
+            <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            Stock Position Report
+        </a>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="get" asp-action="Inward" style="display:flex;gap:10px;align-items:center;">
+        <select name="partyId" class="searchable-select" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
+            <option value="">-- Tamam Parties --</option>
+            @if (ViewBag.Parties != null)
+            {
+                foreach (var p in ViewBag.Parties)
+                {
+                    <option value="@p.Id" selected="@(ViewBag.SelectedPartyId == p.Id ? "selected" : null)">@p.Name</option>
+                }
+            }
+        </select>
+        <select name="status" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
+            <option value="Active" selected="@(ViewBag.SelectedStatus == "Active" ? "selected" : null)">Active Lots</option>
+            <option value="Closed" selected="@(ViewBag.SelectedStatus == "Closed" ? "selected" : null)">Closed Lots</option>
+            <option value="All" selected="@(ViewBag.SelectedStatus == "All" ? "selected" : null)">Tamam Lots</option>
+        </select>
+    </form>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div style="background:var(--green-dim);color:var(--green-text);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;border:1px solid var(--border);">
+        <i class="fa fa-check-circle me-1"></i> @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div style="background:var(--red-dim);color:var(--red-text);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;border:1px solid var(--border);">
+        <i class="fa fa-exclamation-triangle me-1"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Inward Lot Entry Collapsible Form -->
+<div class="form-card" id="lotEntryForm" style="display:none;background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;margin-bottom:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h4 style="color:var(--brass);font-size:15px;font-weight:600;margin:0;">
+            <i class="fa fa-truck-loading me-1"></i> Maal Inward Entry (Generate New Lot)
+        </h4>
+        <button type="button" class="btn" onclick="toggleLotForm()" style="padding:4px 8px;font-size:11px;background:transparent;color:var(--text-dim);">&times; Close</button>
+    </div>
+
+    <form asp-action="CreateLot" method="post" id="mainLotForm">
+        @Html.AntiForgeryToken()
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;">
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Inward Date *</label>
+                <input type="date" name="InwardDate" id="inwardDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" onchange="calculateRentPreview()" />
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Party / Customer *</label>
+                <select name="PartyId" id="partySelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                    <option value="">-- Party Select Karein --</option>
+                    @if (ViewBag.Parties != null)
+                    {
+                        foreach (var p in ViewBag.Parties)
+                        {
+                            <option value="@p.Id">@p.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Product / Commodity *</label>
+                <select name="ProductId" id="productSelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                    <option value="">-- Product Select Karein --</option>
+                    @if (ViewBag.Products != null)
+                    {
+                        foreach (var prod in ViewBag.Products)
+                        {
+                            <option value="@prod.Id">@prod.Name (@prod.Unit)</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Inward Quantity (Qty) *</label>
+                <input type="number" step="any" min="1" name="OriginalQty" id="inwardQty" placeholder="e.g. 100" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="calculateRentPreview()" />
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Monthly Rent Rate (per unit) *</label>
+                <input type="number" step="any" min="0" name="MonthlyRentRate" id="monthlyRate" placeholder="e.g. 50" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="calculateRentPreview()" />
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Bay / Rack Location</label>
+                <input type="text" name="BayOrLocation" placeholder="e.g. Bay A-12, Godown 2" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+        </div>
+
+        <!-- Rent Calculation Preview Box -->
+        <div style="background:var(--surface2);border-left:4px solid var(--brass);padding:12px 16px;border-radius:6px;margin:16px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+                <span style="font-size:11.5px;color:var(--text-dim);display:block;">Estimated First Month Storage Rent:</span>
+                <b id="previewRentAmount" style="font-size:17px;color:var(--brass);">Rs 0.00</b>
+            </div>
+            <div>
+                <span style="font-size:11.5px;color:var(--text-dim);display:block;">Auto Next Billing Date:</span>
+                <b id="previewNextBillingDate" style="font-size:14px;color:var(--text);">--</b>
+            </div>
+        </div>
+
+        <!-- Lifter Option -->
+        <div style="border:1px dashed var(--border);padding:12px 16px;border-radius:8px;margin-bottom:16px;background:rgba(212,175,55,0.03);">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--text);cursor:pointer;">
+                <input type="checkbox" name="UseLifter" id="useLifterCheck" value="true" style="accent-color:var(--brass);width:16px;height:16px;" onchange="toggleLifterFields()" />
+                Is Inward par Lifter / Forklift use hua? (Add Lifter Rent)
+            </label>
+
+            <div id="lifterFields" style="display:none;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-top:12px;">
+                <div>
+                    <label style="font-size:11px;color:var(--text-dim);display:block;margin-bottom:2px;">Lifter Hours / Trips</label>
+                    <input type="number" step="any" min="0.5" name="LifterQtyOrHours" id="lifterHours" value="1" style="width:100%;padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" />
+                </div>
+                <div>
+                    <label style="font-size:11px;color:var(--text-dim);display:block;margin-bottom:2px;">Lifter Rate (Rs)</label>
+                    <input type="number" step="any" min="0" name="LifterRate" id="lifterRate" placeholder="e.g. 1500" style="width:100%;padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" />
+                </div>
+            </div>
+        </div>
+
+        <div class="field" style="margin-bottom:16px;">
+            <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Remarks / Notes</label>
+            <input type="text" name="Remarks" placeholder="Gari no, driver name, condition etc." style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+        </div>
+
+        <div style="text-align:right;">
+            <button type="button" class="btn" onclick="toggleLotForm()" style="background:var(--surface2);color:var(--text);margin-right:8px;">Cancel</button>
+            <button type="submit" class="btn brass" style="padding:8px 24px;">
+                <i class="fa fa-save me-1"></i> Save Inward Lot
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Table Card -->
+<div class="table-card" style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;overflow-x:auto;">
+    <table class="table" style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead>
+            <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
+                <th style="padding:10px 8px;">Lot No</th>
+                <th style="padding:10px 8px;">Inward Date</th>
+                <th style="padding:10px 8px;">Party</th>
+                <th style="padding:10px 8px;">Product</th>
+                <th style="padding:10px 8px;text-align:right;">Inward Qty</th>
+                <th style="padding:10px 8px;text-align:right;">Remaining Qty</th>
+                <th style="padding:10px 8px;text-align:right;">Rate/Mo</th>
+                <th style="padding:10px 8px;">Location</th>
+                <th style="padding:10px 8px;">Next Bill Date</th>
+                <th style="padding:10px 8px;text-align:center;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var lot in Model)
+                {
+                    <tr style="border-bottom:1px solid var(--border-soft);">
+                        <td style="padding:10px 8px;font-weight:600;color:var(--brass);">
+                            @lot.LotNo
+                        </td>
+                        <td style="padding:10px 8px;">@lot.InwardDate.ToString("dd-MMM-yyyy")</td>
+                        <td style="padding:10px 8px;font-weight:500;">@(lot.Party?.Name ?? "N/A")</td>
+                        <td style="padding:10px 8px;">@(lot.Product?.Name ?? "N/A")</td>
+                        <td style="padding:10px 8px;text-align:right;font-weight:600;">@lot.OriginalQty.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:right;font-weight:700;color:@(lot.CurrentRemainingQty > 0 ? "var(--green)" : "var(--text-dim)");">
+                            @lot.CurrentRemainingQty.ToString("N0")
+                        </td>
+                        <td style="padding:10px 8px;text-align:right;">Rs @lot.MonthlyRentRate.ToString("N0")</td>
+                        <td style="padding:10px 8px;color:var(--text-dim);">@(lot.BayOrLocation ?? "-")</td>
+                        <td style="padding:10px 8px;color:@(lot.NextBillingDate <= DateTime.Today && lot.CurrentRemainingQty > 0 ? "var(--red)" : "var(--text)");">
+                            @lot.NextBillingDate.ToString("dd-MMM-yyyy")
+                        </td>
+                        <td style="padding:10px 8px;text-align:center;">
+                            @if (lot.Status == "Active")
+                            {
+                                <span style="background:var(--green-dim);color:var(--green-text);padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;">Active</span>
+                            }
+                            else
+                            {
+                                <span style="background:var(--surface2);color:var(--text-dim);padding:3px 8px;border-radius:12px;font-size:11px;">Closed</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="10" style="padding:24px;text-align:center;color:var(--text-dim);">
+                        Koi Inward Lot nahi mili. Naya maal inward karne ke liye upar diye gaye button par click karein.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+<script>
+function toggleLotForm() {
+    const form = document.getElementById('lotEntryForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    if (form.style.display === 'block') {
+        calculateRentPreview();
+    }
+}
+
+function toggleLifterFields() {
+    const check = document.getElementById('useLifterCheck');
+    const fields = document.getElementById('lifterFields');
+    fields.style.display = check.checked ? 'grid' : 'none';
+}
+
+function calculateRentPreview() {
+    const qty = parseFloat(document.getElementById('inwardQty').value) || 0;
+    const rate = parseFloat(document.getElementById('monthlyRate').value) || 0;
+    const amount = qty * rate;
+    document.getElementById('previewRentAmount').innerText = 'Rs ' + amount.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+    const inwardDateInput = document.getElementById('inwardDate').value;
+    if (inwardDateInput) {
+        const d = new Date(inwardDateInput);
+        d.setMonth(d.getMonth() + 1);
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        document.getElementById('previewNextBillingDate').innerText = d.toLocaleDateString('en-GB', options);
+    }
+}
+</script>
+}

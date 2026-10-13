@@ -1,0 +1,132 @@
+@model ERP_Core.Models.WarehouseRentBill
+
+@{
+    Layout = null;
+    var company = ViewBag.Company as ERP_Core.Models.Company;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Bill #@Model.BillNo — @(Model.Party?.Name ?? "Warehouse Bill")</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 25px; color: #1e293b; background: #fff; }
+        .invoice-card { max-width: 800px; margin: auto; border: 1px solid #e2e8f0; padding: 30px; border-radius: 8px; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #cbd5e1; padding-bottom: 18px; margin-bottom: 20px; }
+        .company-name { font-size: 22px; font-weight: 700; color: #0f172a; }
+        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .meta-box { background: #f8fafc; padding: 12px 16px; border-radius: 6px; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px; text-align: left; border-bottom: 2px solid #cbd5e1; }
+        td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+        .total-box { margin-left: auto; width: 280px; font-size: 14px; }
+        .total-row { display: flex; justify-content: space-between; padding: 6px 0; }
+        .grand-total { border-top: 2px solid #0f172a; font-size: 16px; font-weight: 700; color: #0f172a; padding-top: 8px; }
+        .footer { margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 11px; text-align: center; color: #64748b; }
+        @@media print {
+            body { padding: 0; }
+            .invoice-card { border: none; padding: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="max-width:800px;margin:0 auto 15px;text-align:right;">
+        <button onclick="window.print()" style="background:#0f172a;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-weight:600;">
+            Print / Save PDF
+        </button>
+    </div>
+
+    <div class="invoice-card">
+        <div class="header">
+            <div>
+                <div class="company-name">@(company?.CompanyName ?? "West Wharf Warehouse")</div>
+                <div style="font-size:12px;color:#64748b;">@(company?.Address ?? "Plot # 14/B, West Wharf Road, Industrial Area, Karachi")</div>
+                <div style="font-size:12px;color:#64748b;">Tel: @(company?.Phone ?? "-") | Email: @(company?.EmailId ?? "-")</div>
+            </div>
+            <div style="text-align:right;">
+                <h2 style="margin:0;color:#0f172a;font-size:24px;">RENT INVOICE</h2>
+                <div style="font-size:14px;font-weight:600;color:#d97706;margin-top:4px;">#@Model.BillNo</div>
+                <div style="font-size:12px;color:#64748b;">Date: @Model.BillDate.ToString("dd-MMM-yyyy")</div>
+            </div>
+        </div>
+
+        <div class="meta-grid">
+            <div class="meta-box">
+                <span style="font-size:11px;color:#64748b;display:block;text-transform:uppercase;font-weight:600;">Billed To (Party):</span>
+                <b style="font-size:15px;color:#0f172a;">@(Model.Party?.Name ?? "Client")</b>
+                <div style="margin-top:4px;color:#475569;">Phone: @(Model.Party?.Phone ?? "-")</div>
+                <div style="color:#475569;">City/Address: @(Model.Party?.Address ?? Model.Party?.City ?? "-")</div>
+            </div>
+            <div class="meta-box">
+                <span style="font-size:11px;color:#64748b;display:block;text-transform:uppercase;font-weight:600;">Billing Details:</span>
+                <div>Billing Period: <b>@Model.BillingMonth</b></div>
+                <div>Status: <b style="color:#d97706;">@Model.Status</b></div>
+                @if (!string.IsNullOrEmpty(Model.Remarks))
+                {
+                    <div style="margin-top:4px;">Remarks: @Model.Remarks</div>
+                }
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:5%;">#</th>
+                    <th style="width:55%;">Description</th>
+                    <th style="width:15%;text-align:right;">Billed Qty / Hrs</th>
+                    <th style="width:10%;text-align:right;">Rate</th>
+                    <th style="width:15%;text-align:right;">Amount (PKR)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{ int rowIdx = 1; }
+                @if (Model.Details != null && Model.Details.Any())
+                {
+                    foreach (var d in Model.Details)
+                    {
+                        <tr>
+                            <td>@(rowIdx++)</td>
+                            <td>
+                                <b>@d.Description</b>
+                                <span style="display:block;font-size:11px;color:#64748b;">Category: @d.ChargeType</span>
+                            </td>
+                            <td style="text-align:right;">@d.BilledQty.ToString("N1")</td>
+                            <td style="text-align:right;">@d.Rate.ToString("N0")</td>
+                            <td style="text-align:right;font-weight:600;">@d.Amount.ToString("N2")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <div class="total-box">
+            <div class="total-row">
+                <span>Storage Rent Total:</span>
+                <b>Rs @Model.StorageRentTotal.ToString("N2")</b>
+            </div>
+            <div class="total-row">
+                <span>Lifter Charges Total:</span>
+                <b>Rs @Model.LifterChargesTotal.ToString("N2")</b>
+            </div>
+            @if (Model.OtherCharges > 0)
+            {
+                <div class="total-row">
+                    <span>Other Charges / Adj:</span>
+                    <b>Rs @Model.OtherCharges.ToString("N2")</b>
+                </div>
+            }
+            <div class="total-row grand-total">
+                <span>Net Payable:</span>
+                <span>Rs @Model.GrandTotal.ToString("N2")</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div>Computer generated Warehouse Rental Bill &middot; <b>West Wharf Warehouse</b></div>
+            <div style="margin-top:4px;font-size:10.5px;color:#94a3b8;">Developed By <b style="color:#0f172a;">Awais Qureshi</b></div>
+        </div>
+    </div>
+</body>
+</html>
