@@ -114,3 +114,31 @@ GO
 
 PRINT 'Deactivated fish-trading menu modules.';
 GO
+
+-- 7. Seed generic items: Bags and Pallet only (deactivate specific commodity names)
+UPDATE [dbo].[WarehouseItems] SET [Active] = 0;
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[WarehouseItems] WHERE [Name] = 'Bags')
+BEGIN
+    INSERT INTO [dbo].[WarehouseItems] ([Code], [Name], [Unit], [Category], [Description], [CompanyId], [Active])
+    VALUES ('ITEM-001', 'Bags', 'Bag', 'General', 'Standard Bags / Boray', 1, 1);
+END
+ELSE
+BEGIN
+    UPDATE [dbo].[WarehouseItems] SET [Active] = 1 WHERE [Name] = 'Bags';
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM [dbo].[WarehouseItems] WHERE [Name] = 'Pallet')
+BEGIN
+    INSERT INTO [dbo].[WarehouseItems] ([Code], [Name], [Unit], [Category], [Description], [CompanyId], [Active])
+    VALUES ('ITEM-002', 'Pallet', 'Pallet', 'General', 'Standard Wooden / Plastic Pallet', 1, 1);
+END
+ELSE
+BEGIN
+    UPDATE [dbo].[WarehouseItems] SET [Active] = 1 WHERE [Name] = 'Pallet';
+END
+GO
+
+PRINT 'Set active warehouse items to Bags and Pallet only.';
+GO
