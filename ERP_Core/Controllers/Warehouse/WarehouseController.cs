@@ -47,7 +47,7 @@ namespace ERP_Core.Controllers.Warehouse
         public async Task<IActionResult> Inward(int? partyId, string? status, DateTime? fromDate, DateTime? toDate)
         {
             ViewData["Title"] = "Inward Lots (Stock In)";
-            ViewData["SubTitle"] = "Party-wise maal inward karein, monthly rate aur lot assign karein.";
+            ViewData["SubTitle"] = "Record party stock inward, assign monthly rent rate and lot number.";
             ViewData["ActivePage"] = "WarehouseInward";
 
             int companyId = GetCurrentCompanyId();
@@ -99,7 +99,7 @@ namespace ERP_Core.Controllers.Warehouse
         {
             if (dto.PartyId <= 0 || dto.ProductId <= 0 || dto.OriginalQty <= 0 || dto.MonthlyRentRate <= 0)
             {
-                TempData["ErrorMessage"] = "Party, Item, Quantity aur Monthly Rate required hain!";
+                TempData["ErrorMessage"] = "Party, Item, Quantity, and Monthly Rate are required.";
                 return RedirectToAction(nameof(Inward));
             }
 
@@ -171,12 +171,12 @@ namespace ERP_Core.Controllers.Warehouse
                     await _context.SaveChangesAsync();
                 }
 
-                TempData["SuccessMessage"] = $"Lot {lotNo} kamyabi se darj ho gayi! First Month Rent: Rs {firstMonthAmount:N0}, Next Billing: {nextBillingDate:dd-MMM-yyyy}.";
+                TempData["SuccessMessage"] = $"Lot {lotNo} recorded successfully! First Month Rent: Rs {firstMonthAmount:N0}, Next Billing: {nextBillingDate:dd-MMM-yyyy}.";
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating lot");
-                TempData["ErrorMessage"] = "Lot save karne mein masla aaya: " + ex.Message;
+                TempData["ErrorMessage"] = "Error saving lot: " + ex.Message;
             }
 
             return RedirectToAction(nameof(Inward));
@@ -190,7 +190,7 @@ namespace ERP_Core.Controllers.Warehouse
         public async Task<IActionResult> Outward(int? partyId, DateTime? fromDate, DateTime? toDate)
         {
             ViewData["Title"] = "Outward (Stock Out / Gate Pass)";
-            ViewData["SubTitle"] = "Lot select karke maal out karein — remaining stock auto calculate hoga.";
+            ViewData["SubTitle"] = "Select lot to dispatch goods — remaining stock is calculated automatically.";
             ViewData["ActivePage"] = "WarehouseOutward";
 
             int companyId = GetCurrentCompanyId();
@@ -250,7 +250,7 @@ namespace ERP_Core.Controllers.Warehouse
         {
             if (dto.LotId <= 0 || dto.OutQty <= 0)
             {
-                TempData["ErrorMessage"] = "Lot aur valid Out Quantity select karein!";
+                TempData["ErrorMessage"] = "Please select a Lot and enter a valid Out Quantity.";
                 return RedirectToAction(nameof(Outward));
             }
 
@@ -262,13 +262,13 @@ namespace ERP_Core.Controllers.Warehouse
                 var lot = await _context.WarehouseLots.FindAsync(dto.LotId);
                 if (lot == null)
                 {
-                    TempData["ErrorMessage"] = "Selected Lot record nahi mila!";
+                    TempData["ErrorMessage"] = "Selected Lot record not found.";
                     return RedirectToAction(nameof(Outward));
                 }
 
                 if (dto.OutQty > lot.CurrentRemainingQty)
                 {
-                    TempData["ErrorMessage"] = $"Out quantity ({dto.OutQty}) mojuda remaining stock ({lot.CurrentRemainingQty}) se zyada nahi ho sakti!";
+                    TempData["ErrorMessage"] = $"Out quantity ({dto.OutQty}) cannot exceed remaining stock ({lot.CurrentRemainingQty}).";
                     return RedirectToAction(nameof(Outward));
                 }
 
@@ -331,12 +331,12 @@ namespace ERP_Core.Controllers.Warehouse
                     await _context.SaveChangesAsync();
                 }
 
-                TempData["SuccessMessage"] = $"Outward {outwardNo} darj ho gaya! Lot #{lot.LotNo} ka baqaya stock: {remainingAfter}.";
+                TempData["SuccessMessage"] = $"Outward {outwardNo} recorded successfully! Lot #{lot.LotNo} remaining stock: {remainingAfter}.";
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating outward");
-                TempData["ErrorMessage"] = "Outward entry save karne mein masla aaya: " + ex.Message;
+                TempData["ErrorMessage"] = "Error saving outward entry: " + ex.Message;
             }
 
             return RedirectToAction(nameof(Outward));
@@ -350,7 +350,7 @@ namespace ERP_Core.Controllers.Warehouse
         public async Task<IActionResult> Lifter(int? partyId, string? status, DateTime? fromDate, DateTime? toDate)
         {
             ViewData["Title"] = "Lifter Usage & Log";
-            ViewData["SubTitle"] = "Lifter / Forklift ka rozana istemaal aur party-wise billing track karein.";
+            ViewData["SubTitle"] = "Track daily forklift / lifter service usage and party billing.";
             ViewData["ActivePage"] = "WarehouseLifter";
 
             int companyId = GetCurrentCompanyId();
@@ -402,7 +402,7 @@ namespace ERP_Core.Controllers.Warehouse
         {
             if (dto.PartyId <= 0 || dto.QuantityOrHours <= 0 || dto.Rate <= 0)
             {
-                TempData["ErrorMessage"] = "Party, Hours/Trips aur Rate zaroori hain!";
+                TempData["ErrorMessage"] = "Party, Hours/Trips, and Rate are required.";
                 return RedirectToAction(nameof(Lifter));
             }
 
@@ -432,12 +432,12 @@ namespace ERP_Core.Controllers.Warehouse
                 await _context.WarehouseLifterUsages.AddAsync(usage);
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = $"Lifter usage save ho gaya! Total Amount: Rs {usage.TotalAmount:N0} (Status: Unbilled).";
+                TempData["SuccessMessage"] = $"Lifter usage recorded successfully! Total Amount: Rs {usage.TotalAmount:N0} (Status: Unbilled).";
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating lifter usage");
-                TempData["ErrorMessage"] = "Lifter entry save karne mein masla aaya: " + ex.Message;
+                TempData["ErrorMessage"] = "Error saving lifter usage: " + ex.Message;
             }
 
             return RedirectToAction(nameof(Lifter));
@@ -455,9 +455,9 @@ namespace ERP_Core.Controllers.Warehouse
             string _autoUser = GetCurrentUserName();
             int autoCount = await AutoGenerateDueBillsAsync(_autoCompanyId, _autoUser, billDate ?? DateTime.Today);
             if (autoCount > 0)
-                TempData["SuccessMessage"] = $"{autoCount} monthly bill(s) auto-generate ho gaye.";
+                TempData["SuccessMessage"] = $"Auto-generated {autoCount} monthly rent bill(s).";
             ViewData["Title"] = "Monthly Rent Invoicing";
-            ViewData["SubTitle"] = "Remaining stock par monthly rolling bill aur lifter charges generate karein.";
+            ViewData["SubTitle"] = "Automated monthly rolling rent and lifter charge billing on remaining stock.";
             ViewData["ActivePage"] = "WarehouseBilling";
 
             int companyId = GetCurrentCompanyId();
@@ -816,7 +816,7 @@ namespace ERP_Core.Controllers.Warehouse
         public async Task<IActionResult> StockReport(int? partyId, int? productId, string? status)
         {
             ViewData["Title"] = "Warehouse Stock Position Report";
-            ViewData["SubTitle"] = "Lot-wise mojuda maal, in/out summary aur agle rent ki tareekh.";
+            ViewData["SubTitle"] = "Lot-wise current inventory, dispatch summary, and upcoming monthly rent billing dates.";
             ViewData["ActivePage"] = "WarehouseStockReport";
 
             int companyId = GetCurrentCompanyId();

@@ -2,27 +2,23 @@
 
 @{
     ViewData["Title"] = "Monthly Rent Invoicing";
-    ViewData["SubTitle"] = "Monthly bills khud-ba-khud generate hote hain — remaining stock par rolling rent + lifter charges.";
+    ViewData["SubTitle"] = "Monthly storage bills auto-generate based on remaining stock rolling rent and lifter usage.";
     var dueLots = ViewBag.DueLots as List<ERP_Core.Models.WarehouseLot> ?? new List<ERP_Core.Models.WarehouseLot>();
     var unbilledLifter = ViewBag.UnbilledLifter as List<ERP_Core.Models.WarehouseLifterUsage> ?? new List<ERP_Core.Models.WarehouseLifterUsage>();
+    var currentBillingMonth = ViewBag.TargetDate != null ? ((string)ViewBag.TargetDate).Substring(0, 7) : DateTime.Today.ToString("yyyy-MM");
 }
 
 <div class="toolbar">
     <div style="display:flex;gap:10px;align-items:center;">
-        @* MANUAL BILLING DISABLED 2026-10-15 — bills auto-generate on page visit
-        <button type="button" class="btn brass" onclick="toggleGenerateBillSection()">
-            <i class="fa fa-calculator me-1"></i> Generate Monthly Bill
-        </button>
-        *@
         <a asp-action="Inward" class="btn" style="background:var(--surface2);color:var(--text);">
             <i class="fa fa-boxes me-1"></i> Inward Lots
         </a>
     </div>
 
     <!-- Filter Form -->
-    <form method="get" asp-action="Billing" style="display:flex;gap:10px;align-items:center;">
+    <form method="get" asp-action="Billing" style="display:flex;gap:10px;align-items:center;" id="billingFilterForm">
         <select name="partyId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
-            <option value="">-- Tamam Customers --</option>
+            <option value="">-- All Parties --</option>
             @if (ViewBag.Parties != null)
             {
                 foreach (var p in ViewBag.Parties)
@@ -31,7 +27,8 @@
                 }
             }
         </select>
-        <input type="date" name="billDate" value="@ViewBag.TargetDate" style="padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()" />
+        <input type="hidden" name="billDate" id="billingFilterBillDate" value="@ViewBag.TargetDate" />
+        <input type="month" id="billingFilterMonthYear" value="@currentBillingMonth" style="padding:6px 10px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="onBillingMonthYearChange(this.value)" />
     </form>
 </div>
 
@@ -228,7 +225,7 @@
                 <th style="padding:10px 8px;">Bill No</th>
                 <th style="padding:10px 8px;">Bill Date</th>
                 <th style="padding:10px 8px;">Billing Month</th>
-                <th style="padding:10px 8px;">Customer</th>
+                <th style="padding:10px 8px;">Party</th>
                 <th style="padding:10px 8px;text-align:right;">Storage Rent</th>
                 <th style="padding:10px 8px;text-align:right;">Lifter Charges</th>
                 <th style="padding:10px 8px;text-align:right;">Grand Total</th>
@@ -266,7 +263,7 @@
             {
                 <tr>
                     <td colspan="9" style="padding:24px;text-align:center;color:var(--text-dim);">
-                        Abhi tak koi monthly bill generate nahi hua. Upar "Generate Monthly Bill" button par click karein.
+                        No monthly bills found. Bills are generated automatically each month based on remaining lot balances and unbilled lifter usages.
                     </td>
                 </tr>
             }
@@ -355,6 +352,17 @@ function updateGrandTotalPreview() {
     total += other;
 
     document.getElementById('billGrandTotalText').innerText = 'Rs ' + total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+}
+
+function onBillingMonthYearChange(monthYearVal) {
+    if (!monthYearVal) return;
+    const parts = monthYearVal.split('-');
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const lastDayDate = new Date(year, month, 0);
+    const lastDay = `${year}-${String(month).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
+    document.getElementById('billingFilterBillDate').value = lastDay;
+    document.getElementById('billingFilterForm').submit();
 }
 </script>
 }

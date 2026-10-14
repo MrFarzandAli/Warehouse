@@ -57,9 +57,31 @@ GO
 -- 3. Deactivate supplier modules (no suppliers in warehouse flow)
 UPDATE [dbo].[CModules]
 SET [Active] = 0
-WHERE [Url] IN ('SupplierMaster', 'supplier-master', 'SupplierPayable', 'supplier-payable')
-   OR [Name] IN ('Supplier Master', 'Supplier Payable', 'Supplier Payables');
+WHERE [Url] IN ('SupplierMaster', 'supplier-master', 'SupplierPayable', 'supplier-payable', 'PaymentVoucher', 'paymentvoucher', 'DailyPurchase', 'dailypurchase')
+   OR [Name] IN ('Supplier Master', 'Supplier Payable', 'Supplier Payables', 'Payment Voucher', 'Daily Purchase');
 GO
 
-PRINT 'Deactivated supplier menu modules.';
+-- 4. Update Party Master and Party Receivables names in menu
+UPDATE [dbo].[CModules] SET [Name] = 'Party Master' WHERE [Url] = 'CustomerMaster' OR [Name] LIKE '%Customer Master%';
+UPDATE [dbo].[CModules] SET [Name] = 'Party Receivables' WHERE [Url] = 'customerreceivable' OR [Name] LIKE '%Receivable%';
+GO
+
+-- 5. Clean up old junk supplier records from Vendors (parties are customers only)
+UPDATE [dbo].[Vendors] SET [ParentSupplierId] = NULL WHERE [VendorType] = 'Supplier';
+DELETE FROM [dbo].[Vendors] WHERE [VendorType] = 'Supplier';
+GO
+
+-- 6. Insert default lifter equipment rates if empty
+IF NOT EXISTS (SELECT 1 FROM [dbo].[LifterRates])
+BEGIN
+    INSERT INTO [dbo].[LifterRates] (EquipmentName, NormalRate, PeakRate, PeakStartTime, PeakEndTime, Remarks, CompanyId, CreatedOn, CreatedBy, Active)
+    VALUES 
+    ('Forklift 01 (3-Ton Electric)', 1500, 2200, '18:00', '23:00', 'Standard pallet loading / inward unloading', 1, GETDATE(), 'System', 1),
+    ('Forklift 02 (5-Ton Heavy Diesel)', 2000, 2800, '18:00', '23:00', 'Heavy container loading & high-bay stacking', 1, GETDATE(), 'System', 1),
+    ('Hydraulic Pallet Jack', 500, 750, '18:00', '23:00', 'Manual ground-floor pallet shifting', 1, GETDATE(), 'System', 1);
+    PRINT 'Inserted default LifterRates.';
+END
+GO
+
+PRINT 'Warehouse Phase 2 migration completed successfully.';
 GO

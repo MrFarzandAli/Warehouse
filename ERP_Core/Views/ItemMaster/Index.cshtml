@@ -2,14 +2,14 @@
 
 @{
     ViewData["Title"] = "Item Master";
-    ViewData["SubTitle"] = "Warehouse items / products ki list — inward aur billing me yehi items aayenge.";
+    ViewData["SubTitle"] = "Warehouse items and products master list — used for inward stock and monthly billing.";
 }
 
 <div class="toolbar">
     <div style="display:flex;gap:10px;align-items:center;">
         <button type="button" class="btn brass" onclick="toggleItemForm()">
             <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            Naya Item Add Karein
+            Add New Item
         </button>
     </div>
 
@@ -17,7 +17,7 @@
         <input type="text" name="search" value="@ViewBag.Search" placeholder="Search item..."
                style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" />
         <select name="category" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
-            <option value="All">-- Tamam Categories --</option>
+            <option value="All">-- All Categories --</option>
             @if (ViewBag.Categories != null)
             {
                 foreach (var c in ViewBag.Categories)
@@ -47,7 +47,7 @@
 <div class="form-card" id="itemEntryForm" style="display:none;background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;margin-bottom:20px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <h4 style="color:var(--brass);font-size:15px;font-weight:600;margin:0;" id="itemFormTitle">
-            <i class="fa fa-box me-1"></i> Naya Item
+            <i class="fa fa-box me-1"></i> New Item
         </h4>
         <button type="button" class="btn" onclick="toggleItemForm()" style="padding:4px 8px;font-size:11px;background:transparent;color:var(--text-dim);">&times; Close</button>
     </div>
@@ -143,7 +143,7 @@
                             <button type="button" class="btn" style="padding:4px 10px;font-size:11px;background:var(--surface2);color:var(--text);" onclick="editItem(@item.Id)">
                                 <i class="fa fa-edit"></i> Edit
                             </button>
-                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;" onsubmit="return confirm('Is item ko inactive karna hai?');">
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to deactivate this item?');">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn" style="padding:4px 10px;font-size:11px;background:transparent;color:var(--red);border:1px solid var(--red);">
                                     <i class="fa fa-trash"></i>
@@ -157,7 +157,7 @@
             {
                 <tr>
                     <td colspan="7" style="padding:24px;text-align:center;color:var(--text-dim);">
-                        Koi item nahi mila. Upar diye gaye button se naya item add karein.
+                        No items found. Click 'Add New Item' button above to create one.
                     </td>
                 </tr>
             }
@@ -175,7 +175,7 @@ function toggleItemForm() {
 function resetItemForm() {
     document.getElementById('itemForm').reset();
     document.getElementById('itemId').value = '0';
-    document.getElementById('itemFormTitle').innerHTML = '<i class="fa fa-box me-1"></i> Naya Item';
+    document.getElementById('itemFormTitle').innerHTML = '<i class="fa fa-box me-1"></i> New Item';
 }
 
 async function editItem(id) {
@@ -189,7 +189,7 @@ async function editItem(id) {
             document.getElementById('itemUnit').value = d.unit;
             document.getElementById('itemCategory').value = d.category;
             document.getElementById('itemDescription').value = d.description;
-            document.getElementById('itemFormTitle').innerHTML = '<i class="fa fa-edit me-1"></i> Item Edit Karein';
+            document.getElementById('itemFormTitle').innerHTML = '<i class="fa fa-edit me-1"></i> Edit Item';
             const form = document.getElementById('itemEntryForm');
             form.style.display = 'block';
             form.scrollIntoView({ behavior: 'smooth' });

@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Lifter Usage & Log";
-    ViewData["SubTitle"] = "Lifter / Forklift ka rozana istemaal aur party-wise billing track karein.";
+    ViewData["SubTitle"] = "Track daily forklift / lifter service usage and party billing.";
 }
 
 <div class="toolbar">
@@ -18,7 +18,7 @@
     <!-- Filter Form -->
     <form method="get" asp-action="Lifter" style="display:flex;gap:10px;align-items:center;">
         <select name="partyId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
-            <option value="">-- Tamam Customers --</option>
+            <option value="">-- All Parties --</option>
             @if (ViewBag.Parties != null)
             {
                 foreach (var p in ViewBag.Parties)
@@ -66,9 +66,9 @@
             </div>
 
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Customer *</label>
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Party *</label>
                 <select name="PartyId" id="lifterPartySelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
-                    <option value="">-- Customer Select Karein --</option>
+                    <option value="">-- Select Party --</option>
                     @if (ViewBag.Parties != null)
                     {
                         foreach (var p in ViewBag.Parties)
@@ -77,13 +77,13 @@
                         }
                     }
                 </select>
-                <span style="font-size:10.5px;color:var(--text-dim);">Lot select karne par customer khud set ho jayega</span>
+                <span style="font-size:10.5px;color:var(--text-dim);">Party will be set automatically when lot is selected</span>
             </div>
 
             <div class="field">
                 <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Associated Lot *</label>
                 <select name="LotId" id="lifterLotSelect" required onchange="onLifterLotSelected()" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
-                    <option value="">-- Lot Select Karein --</option>
+                    <option value="">-- Select Lot --</option>
                     @if (ViewBag.ActiveLots != null)
                     {
                         foreach (var l in ViewBag.ActiveLots)
@@ -97,10 +97,10 @@
             <div class="field">
                 <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Equipment *</label>
                 <select name="EquipmentName" id="lifterEquipment" onchange="onLifterRateTypeChanged()" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
-                    <option value="">-- Lifter Select Karein --</option>
+                    <option value="">-- Select Lifter --</option>
                 </select>
                 <div style="margin-top:6px;">
-                    <a href="/LifterRate" target="_blank" style="font-size:11px;color:var(--brass);">+ Rates set karein (Lifter Rate Master)</a>
+                    <a href="/LifterRate" target="_blank" style="font-size:11px;color:var(--brass);">+ Manage rates (Lifter Rate Master)</a>
                 </div>
             </div>
 
@@ -115,7 +115,7 @@
             <div class="field">
                 <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Charging Basis (Type)</label>
                 <select name="UsageType" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
-                    <option value="Hours">Hours (Ghante)</option>
+                    <option value="Hours">Hours</option>
                     <option value="Trips">Trips / Vehicles</option>
                     <option value="Lifting">Per Lifting / Pallets</option>
                 </select>
@@ -127,7 +127,7 @@
             </div>
 
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Lifter Rate (Rs) * <span style="color:var(--brass);font-weight:400;">— master se auto</span></label>
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Lifter Rate (Rs) * <span style="color:var(--brass);font-weight:400;">— auto from rate master</span></label>
                 <input type="number" step="any" min="0" name="Rate" id="lifterUnitRate" placeholder="e.g. 1500" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="updateLifterTotal()" />
             </div>
 
@@ -162,7 +162,7 @@
         <thead>
             <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
                 <th style="padding:10px 8px;">Date</th>
-                <th style="padding:10px 8px;">Customer</th>
+                <th style="padding:10px 8px;">Party</th>
                 <th style="padding:10px 8px;">Lot Linked</th>
                 <th style="padding:10px 8px;">Basis</th>
                 <th style="padding:10px 8px;text-align:right;">Hours / Qty</th>
@@ -203,7 +203,7 @@
             {
                 <tr>
                     <td colspan="9" style="padding:24px;text-align:center;color:var(--text-dim);">
-                        Koi Lifter Usage record nahi mila.
+                        No lifter usage records found.
                     </td>
                 </tr>
             }
@@ -229,7 +229,7 @@ async function loadLifterRates() {
         lifterRatesCache = await res.json();
         const sel = document.getElementById('lifterEquipment');
         const current = sel.value;
-        sel.innerHTML = '<option value="">-- Lifter Select Karein --</option>';
+        sel.innerHTML = '<option value="">-- Select Lifter Equipment --</option>';
         lifterRatesCache.forEach(r => {
             const opt = document.createElement('option');
             opt.value = r.equipmentName;

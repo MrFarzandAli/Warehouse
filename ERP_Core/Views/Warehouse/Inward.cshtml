@@ -2,14 +2,14 @@
 
 @{
     ViewData["Title"] = "Inward Lots (Stock In)";
-    ViewData["SubTitle"] = "Party-wise maal inward karein, monthly rate aur lot assign karein.";
+    ViewData["SubTitle"] = "Record goods inward by party, assign storage rate and track unique lot numbers.";
 }
 
 <div class="toolbar">
     <div style="display:flex;gap:10px;align-items:center;">
         <button type="button" class="btn brass" onclick="toggleLotForm()">
             <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            Naya Maal Inward Karein (New Lot)
+            Add Inward Stock (New Lot)
         </button>
         <a asp-action="StockReport" class="btn" style="background:var(--surface2);color:var(--text);">
             <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
@@ -20,7 +20,7 @@
     <!-- Filter Form -->
     <form method="get" asp-action="Inward" style="display:flex;gap:10px;align-items:center;">
         <select name="partyId" class="searchable-select" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
-            <option value="">-- Tamam Parties --</option>
+            <option value="">-- All Parties --</option>
             @if (ViewBag.Parties != null)
             {
                 foreach (var p in ViewBag.Parties)
@@ -32,7 +32,7 @@
         <select name="status" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
             <option value="Active" selected="@(ViewBag.SelectedStatus == "Active" ? "selected" : null)">Active Lots</option>
             <option value="Closed" selected="@(ViewBag.SelectedStatus == "Closed" ? "selected" : null)">Closed Lots</option>
-            <option value="All" selected="@(ViewBag.SelectedStatus == "All" ? "selected" : null)">Tamam Lots</option>
+            <option value="All" selected="@(ViewBag.SelectedStatus == "All" ? "selected" : null)">All Lots</option>
         </select>
     </form>
 </div>
@@ -77,9 +77,9 @@
                 <input type="date" name="InwardDate" id="inwardDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" onchange="calculateRentPreview()" />
             </div>
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Party / Customer *</label>
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Party (Client / Owner) *</label>
                 <select name="PartyId" id="partySelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
-                    <option value="">-- Party Select Karein --</option>
+                    <option value="">-- Select Party --</option>
                     @if (ViewBag.Parties != null)
                     {
                         foreach (var p in ViewBag.Parties)
@@ -90,7 +90,7 @@
                 </select>
             </div>
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Vehicle / Gari No</label>
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Vehicle No</label>
                 <input type="text" name="VehicleNo" placeholder="e.g. JU-5432" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
             </div>
         </div>
@@ -98,13 +98,13 @@
         <!-- Item line: bilti item row -->
         <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:15px;">
             <div style="background:var(--surface2);padding:8px 14px;font-size:12px;font-weight:700;color:var(--text);border-bottom:1px solid var(--border);">
-                Maal Ki Tafseel (Item Detail)
+                Item Details
             </div>
             <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:0;">
                 <div style="padding:12px 14px;border-right:1px solid var(--border-soft);">
                     <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Item *</label>
                     <select name="ProductId" id="productSelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
-                        <option value="">-- Item Select Karein --</option>
+                        <option value="">-- Select Item --</option>
                         @if (ViewBag.Products != null)
                         {
                             foreach (var prod in ViewBag.Products)
@@ -114,7 +114,7 @@
                         }
                     </select>
                     <div style="margin-top:8px;">
-                        <a href="/ItemMaster" target="_blank" style="font-size:11px;color:var(--brass);">+ Naya item add karein (Item Master)</a>
+                        <a href="/ItemMaster" target="_blank" style="font-size:11px;color:var(--brass);">+ Add new item (Item Master)</a>
                     </div>
                 </div>
                 <div style="padding:12px 14px;border-right:1px solid var(--border-soft);">
@@ -140,7 +140,7 @@
             </div>
             <div class="field" style="grid-column:span 2;">
                 <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Remarks / Notes</label>
-                <input type="text" name="Remarks" placeholder="Driver name, maal ki halat etc." style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+                <input type="text" name="Remarks" placeholder="Driver name, goods condition, etc." style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
             </div>
         </div>
 
@@ -148,7 +148,7 @@
         <div style="background:var(--surface2);border-left:4px solid var(--brass);padding:12px 16px;border-radius:6px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
             <div style="font-size:12px;color:var(--text-dim);">
                 <i class="fa fa-info-circle me-1"></i>
-                Agle mahine isi tareekh ko <b style="color:var(--text);">bache hue stock</b> par bill auto-generate hoga.
+                Next month on this date, rent bill will auto-generate based on <b style="color:var(--text);">remaining stock</b>.
             </div>
             <div>
                 <span style="font-size:11.5px;color:var(--text-dim);display:block;">Auto Next Billing Date:</span>
@@ -180,7 +180,7 @@
         <div style="text-align:right;border-top:2px dashed var(--brass);padding-top:16px;">
             <button type="button" class="btn" onclick="toggleLotForm()" style="background:var(--surface2);color:var(--text);margin-right:8px;">Cancel</button>
             <button type="submit" class="btn brass" style="padding:10px 32px;font-size:14px;font-weight:700;">
-                <i class="fa fa-save me-1"></i> Bilti Save Karein — Lot Banayein
+                <i class="fa fa-save me-1"></i> Save Inward Bilti &amp; Create Lot
             </button>
         </div>
     </form>
@@ -243,7 +243,7 @@
             {
                 <tr>
                     <td colspan="11" style="padding:24px;text-align:center;color:var(--text-dim);">
-                        Koi Inward Lot nahi mili. Naya maal inward karne ke liye upar diye gaye button par click karein.
+                        No inward lots found. Click 'Add Inward Stock' button above to create one.
                     </td>
                 </tr>
             }

@@ -1,14 +1,14 @@
-﻿@model ERP_Core.Dtos.CustomerMasterViewModel
+@model ERP_Core.Dtos.CustomerMasterViewModel
 
 @{
-    ViewData["Title"] = "Party / Customer Master";
-    ViewData["SubTitle"] = "Storage parties, clients aur customers manage karein.";
+    ViewData["Title"] = "Party Master";
+    ViewData["SubTitle"] = "Manage storage parties, clients, and accounts.";
 }
 
 <div class="toolbar">
     <div class="search">
         <svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="text" id="custSearchInput" placeholder="Party dhoondein..." onkeyup="filterCustomerTable()" />
+        <input type="text" id="custSearchInput" placeholder="Search party..." onkeyup="filterCustomerTable()" />
     </div>
     <button type="button" class="btn brass" onclick="openAddCustomerModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
@@ -195,7 +195,7 @@ function cancelCustomerForm() {
 }
 
 function deleteCustomer(id, name) {
-    if (confirm(`Are you sure you want to delete Supplier '${name}'? Linked Chart of Accounts head will also be removed.`)) {
+    if (confirm(`Are you sure you want to delete Party '${name}'? Linked Chart of Accounts head will also be removed.`)) {
         document.getElementById('deleteCustomerId').value = id;
         document.getElementById('deleteCustomerForm').submit();
     }

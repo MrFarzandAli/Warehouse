@@ -1,8 +1,8 @@
 @model ERP_Core.Dtos.CustomerReceivableViewModel
 
 @{
-    ViewData["Title"] = "Supplier Receivable";
-    ViewData["SubTitle"] = "Supplier wise bikri (sales), wasooli (receipts) aur baqaya balance report.";
+    ViewData["Title"] = "Party Receivable";
+    ViewData["SubTitle"] = "Party-wise storage billing, payments received, and outstanding balance report.";
 }
 
 @section Styles {
@@ -213,9 +213,9 @@
 
 <div class="toolbar" style="margin-bottom:14px;">
     <div>
-        <div class="section-title" style="margin-bottom:2px;">Supplier Receivable</div>
+        <div class="section-title" style="margin-bottom:2px;">Party Receivable</div>
         <div class="section-desc" style="margin-bottom:0;">
-            Supplier wise bikri (sales), wasooli (receipts) aur baqaya balance report.
+            Party-wise storage billing, payments received, and outstanding balance report.
         </div>
     </div>
 </div>
@@ -235,42 +235,41 @@
 }
 
 <!-- ========================================================================= -->
-<!-- SUBTABS: RECEIVABLES SUMMARY vs Supplier LEDGER REPORT                     -->
+<!-- SUBTABS: RECEIVABLES SUMMARY vs Party LEDGER REPORT                        -->
 <!-- ========================================================================= -->
 <div class="cr-subtabs">
     <button type="button" class="cr-subtab-btn @(Model.IsSingleCustomerView ? "" : "active")" id="tabBtnSummary" onclick="switchCrTab('summary')">
         Receivables Summary
     </button>
     <button type="button" class="cr-subtab-btn @(Model.IsSingleCustomerView ? "active" : "")" id="tabBtnReport" onclick="switchCrTab('report')">
-        Supplier Ledger Report
+        Party Ledger Report
     </button>
 </div>
 
 <!-- ========================================================================= -->
-<!-- THREE-FIELD FILTER FORM (From Date, To Date, Customer Dropdown)           -->
+<!-- FILTER FORM (Month / Year & Party Dropdown)                               -->
 <!-- ========================================================================= -->
 <div class="receivable-filter-card">
     <form method="get" asp-controller="CustomerReceivable" asp-action="Index" id="custFilterForm">
+        <input type="hidden" name="fromDate" id="filterFromDate" value="@Model.FromDate" />
+        <input type="hidden" name="toDate" id="filterToDate" value="@Model.ToDate" />
+
         <div class="receivable-filter-grid">
-            <!-- Field 1: From Date -->
+            <!-- Field 1: Month / Year Picker -->
             <div class="field" style="margin:0;">
-                <label style="font-size:11.5px;color:var(--text-dim);font-weight:600;margin-bottom:4px;display:block;">From Date</label>
-                <input type="date" name="fromDate" id="filterFromDate" value="@Model.FromDate" required
+                <label style="font-size:11.5px;color:var(--text-dim);font-weight:600;margin-bottom:4px;display:block;">Month &amp; Year</label>
+                @{
+                    var currentMonthVal = DateTime.Parse(Model.FromDate).ToString("yyyy-MM");
+                }
+                <input type="month" id="filterMonthYear" value="@currentMonthVal" required onchange="onMonthYearChange(this.value)"
                        style="height:38px;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;width:100%;" />
             </div>
 
-            <!-- Field 2: To Date -->
+            <!-- Field 2: Party Dropdown -->
             <div class="field" style="margin:0;">
-                <label style="font-size:11.5px;color:var(--text-dim);font-weight:600;margin-bottom:4px;display:block;">To Date</label>
-                <input type="date" name="toDate" id="filterToDate" value="@Model.ToDate" required
-                       style="height:38px;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;width:100%;" />
-            </div>
-
-            <!-- Field 3: Customer Dropdown -->
-            <div class="field" style="margin:0;">
-                <label style="font-size:11.5px;color:var(--text-dim);font-weight:600;margin-bottom:4px;display:block;">Supplier (Buyer)</label>
+                <label style="font-size:11.5px;color:var(--text-dim);font-weight:600;margin-bottom:4px;display:block;">Party (Client / Owner)</label>
                 <select name="customerId" id="filterCustomerSelect" class="searchable-select">
-                    <option value="">-- All Suppliers (Summary) --</option>
+                    <option value="">-- All Parties (Summary) --</option>
                     @foreach (var c in Model.CustomersList)
                     {
                         <option value="@c.Id" selected="@(Model.SelectedCustomerId == c.Id)">
@@ -299,29 +298,29 @@
 </div>
 
 <!-- ========================================================================= -->
-<!-- STAT CARDS (OPENING BAL, BILLED, WASOOLI, OUTSTANDING BALANCE)             -->
+<!-- STAT CARDS (OPENING BAL, BILLED, RECEIVED, OUTSTANDING BALANCE)             -->
 <!-- ========================================================================= -->
 <div class="stat-grid-receivable">
     <div class="stat-box-modern">
         <div class="stat-lbl">
-            @(Model.IsSingleCustomerView ? "OPENING BALANCE" : "TOTAL Suppliers")
+            @(Model.IsSingleCustomerView ? "OPENING BALANCE" : "TOTAL PARTIES")
         </div>
         <div class="stat-num tnum">
-            @(Model.IsSingleCustomerView ? $"Rs {Model.OpeningBalance:N0}" : $"{Model.TotalCustomersCount} Buyers")
+            @(Model.IsSingleCustomerView ? $"Rs {Model.OpeningBalance:N0}" : $"{Model.TotalCustomersCount} Parties")
         </div>
         <div class="stat-sub">
-            @(Model.IsSingleCustomerView ? $"Before {DateTime.Parse(Model.FromDate):dd-MMM-yyyy}" : "Active Registered Accounts")
+            @(Model.IsSingleCustomerView ? $"Before {DateTime.Parse(Model.FromDate):MMMM yyyy}" : "Active Registered Accounts")
         </div>
     </div>
 
     <div class="stat-box-modern stat-glow-red">
-        <div class="stat-lbl">TOTAL BILLED / SALES (DEBIT)</div>
+        <div class="stat-lbl">TOTAL STORAGE BILLED (DR)</div>
         <div class="stat-num tnum">Rs @Model.TotalBilled.ToString("N0")</div>
-        <div class="stat-sub">Fish Sales During Period</div>
+        <div class="stat-sub">Warehouse Storage Invoices</div>
     </div>
 
     <div class="stat-box-modern stat-glow-green">
-        <div class="stat-lbl">TOTAL WASOOLI / PAID (CREDIT)</div>
+        <div class="stat-lbl">TOTAL RECEIVED / PAID (CR)</div>
         <div class="stat-num tnum">Rs @Model.TotalReceived.ToString("N0")</div>
         <div class="stat-sub">Payments Received</div>
     </div>
@@ -342,8 +341,8 @@
     <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
             <div>
-                <h3 style="font-size:15px;font-weight:600;margin:0;color:var(--text);">All Supplier Receivables Summary</h3>
-                <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">Period: @DateTime.Parse(Model.FromDate).ToString("dd-MMM") &mdash; @DateTime.Parse(Model.ToDate).ToString("dd-MMM-yyyy")</div>
+                <h3 style="font-size:15px;font-weight:600;margin:0;color:var(--text);">All Parties Receivables Summary</h3>
+                <div style="font-size:12px;color:var(--text-dim);margin-top:2px;">Month: @DateTime.Parse(Model.FromDate).ToString("MMMM yyyy") (@DateTime.Parse(Model.FromDate).ToString("dd-MMM") &mdash; @DateTime.Parse(Model.ToDate).ToString("dd-MMM-yyyy"))</div>
             </div>
             <button type="button" class="btn brass btn-sm" onclick="printCustomerSummaryReportModal()" style="height:32px;padding:0 14px;font-size:12px;display:inline-flex;align-items:center;gap:6px;">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18h12v4H6zM6 14h12"/></svg>
@@ -356,12 +355,12 @@
                 <thead>
                     <tr>
                         <th style="width:45px;text-align:center;">#</th>
-                        <th>Supplier Name</th>
+                        <th>Party Name</th>
                         <th>City / Area</th>
                         <th>Phone</th>
                         <th style="text-align:right;">Opening Bal</th>
                         <th style="text-align:right;">Total Billed (Dr)</th>
-                        <th style="text-align:right;">Wasooli / Paid (Cr)</th>
+                        <th style="text-align:right;">Total Received (Cr)</th>
                         <th style="text-align:right;">Net Receivable</th>
                         <th style="text-align:center;">Status</th>
                         <th class="no-sort" style="width:110px;text-align:center;">Action</th>
@@ -406,7 +405,7 @@
                                 </td>
                                 <td style="text-align:center;">
                                     <a href="/CustomerReceivable?customerId=@c.CustomerId&fromDate=@Model.FromDate&toDate=@Model.ToDate"
-                                       class="btn ghost btn-sm" style="padding:4px 10px;font-size:11.5px;" title="View Supplier Ledger Report">
+                                       class="btn ghost btn-sm" style="padding:4px 10px;font-size:11.5px;" title="View Party Ledger Report">
                                         View Ledger
                                     </a>
                                 </td>
@@ -477,7 +476,7 @@
                             <th style="width:100px;">Invoice #</th>
                             <th>Description / Particulars</th>
                             <th style="width:130px;text-align:right;">Billed / Sale (Dr)</th>
-                            <th style="width:130px;text-align:right;">Wasooli / Paid (Cr)</th>
+                            <th style="width:130px;text-align:right;">Received / Paid (Cr)</th>
                             <th style="width:140px;text-align:right;">Balance</th>
                         </tr>
                     </thead>
@@ -549,7 +548,11 @@
                         <strong style="color:var(--red-text);font-size:14px;" class="tnum">Rs @Model.TotalBilled.ToString("N2")</strong>
                     </div>
                     <div>
-                        <span style="font-size:11px;color:var(--text-dim);text-transform:uppercase;font-weight:600;display:block;">Total Wasooli (Received):</span>
+                        <span style="font-size:11px;color:var(--text-dim);text-transform:uppercase;font-weight:600;display:block;">Gross Storage Billed:</span>
+                        <strong style="color:var(--red-text);font-size:14px;" class="tnum">Rs @Model.TotalBilled.ToString("N2")</strong>
+                    </div>
+                    <div>
+                        <span style="font-size:11px;color:var(--text-dim);text-transform:uppercase;font-weight:600;display:block;">Total Payments Received:</span>
                         <strong style="color:var(--green-text);font-size:14px;" class="tnum">Rs @Model.TotalReceived.ToString("N2")</strong>
                     </div>
                     <div style="padding:8px 16px;background:rgba(198,138,62,0.18);border:1px solid var(--brass);border-radius:8px;text-align:right;">
@@ -561,16 +564,16 @@
         }
         else
         {
-            <!-- No Customer Selected Prompt -->
+            <!-- No Party Selected Prompt -->
             <div style="text-align:center;padding:48px 24px;">
                 <div style="width:64px;height:64px;border-radius:50%;background:rgba(198,138,62,0.1);display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;border:1px solid rgba(198,138,62,0.3);">
                     <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--brass-text);">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
                     </svg>
                 </div>
-                <h3 style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px;">Koi Supplier Select Nahi Hai</h3>
+                <h3 style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px;">No Party Selected</h3>
                 <p style="font-size:13px;color:var(--text-dim);max-width:440px;margin:0 auto 18px;">
-                    Upar diye gaye dropdown se koi <strong>Supplier (Buyer)</strong> select karein aur <strong>Filter Report</strong> par click karein, ya <em>Receivables Summary</em> tab me kisi bhi Supplier ke aage <em>View Ledger</em> dabayein.
+                    Select a <strong>Party (Client / Owner)</strong> from the dropdown above and click <strong>Filter Report</strong>, or click <em>View Ledger</em> next to any Party in the <em>Receivables Summary</em> tab.
                 </p>
                 <button type="button" class="btn brass" onclick="switchCrTab('summary')">
                     Go to Receivables Summary
@@ -585,6 +588,19 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
     <script>
+        // Month-Year Picker sync helper
+        function onMonthYearChange(monthYearVal) {
+            if (!monthYearVal) return;
+            const parts = monthYearVal.split('-');
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
+            const lastDayDate = new Date(year, month, 0);
+            const lastDay = `${year}-${String(month).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
+            document.getElementById('filterFromDate').value = firstDay;
+            document.getElementById('filterToDate').value = lastDay;
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             // Initialize TomSelect for searchable customer dropdown
             const customerSelect = document.getElementById('filterCustomerSelect');
@@ -592,7 +608,7 @@
                 const ts = new TomSelect(customerSelect, {
                     create: false,
                     allowEmptyOption: true,
-                    placeholder: '-- All Customers (Summary) --',
+                    placeholder: '-- All Parties (Summary) --',
                     sortField: { field: 'text', direction: 'asc' }
                 });
             }
@@ -768,10 +784,10 @@
                 <div class="pp-head" style="margin-bottom:12px;padding-bottom:10px;">
                     <div class="pp-brand">
                         ${compName}
-                        <div class="sub">Fish Commission Agents · Karachi Fish Harbour</div>
+                        <div class="sub">Dry Cargo &amp; Warehouse Logistics · West Wharf Road, Karachi</div>
                     </div>
                     <div class="pp-doc-title">
-                        <h2>Supplier RECEIVABLES SUMMARY</h2>
+                        <h2>PARTY RECEIVABLES SUMMARY</h2>
                         <div class="sub">Outstanding Balances · Zero Balance Accounts Excluded</div>
                     </div>
                 </div>
@@ -779,7 +795,7 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;background:#f8faf9;border:1px solid #cce0d8;border-radius:6px;padding:9px 14px;margin-bottom:14px;font-size:12px;">
                     <div>
                         <span style="font-size:10px;text-transform:uppercase;color:#666;font-weight:700;display:block;">Report Scope:</span>
-                        <strong style="font-size:14px;color:#153229;">All Active Receivables (@nonZeroReceivables.Count Buyers)</strong>
+                        <strong style="font-size:14px;color:#153229;">All Active Receivables (@nonZeroReceivables.Count Parties)</strong>
                     </div>
                     <div style="text-align:right;">
                         <span style="font-size:10px;text-transform:uppercase;color:#666;font-weight:700;display:block;">Statement Period:</span>
@@ -791,22 +807,22 @@
                     <thead>
                         <tr>
                             <th style="width:4%;">#</th>
-                            <th style="width:23%;text-align:left;padding-left:6px !important;">Supplier Name</th>
+                            <th style="width:23%;text-align:left;padding-left:6px !important;">Party Name</th>
                             <th style="width:13%;text-align:left;padding-left:5px !important;">City / Area</th>
                             <th style="width:10%;">Phone</th>
                             <th style="width:10%;text-align:right;padding-right:5px !important;">Opening Bal</th>
                             <th style="width:11%;text-align:right;padding-right:5px !important;">Total Billed (Dr)</th>
-                            <th style="width:11%;text-align:right;padding-right:5px !important;">Wasooli (Cr)</th>
+                            <th style="width:11%;text-align:right;padding-right:5px !important;">Received (Cr)</th>
                             <th style="width:11%;text-align:right;padding-right:5px !important;">Net Receivable</th>
                             <th style="width:7%;">Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${rowsHtml || `<tr><td colspan="9" style="text-align:center;padding:16px;">No Supplier records found with outstanding balance in this period.</td></tr>`}
+                        ${rowsHtml || `<tr><td colspan="9" style="text-align:center;padding:16px;">No Party records found with outstanding balance in this period.</td></tr>`}
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="4" style="text-align:left;font-weight:700;padding-left:6px !important;">Total Summary (@nonZeroReceivables.Count Suppliers):</td>
+                            <td colspan="4" style="text-align:left;font-weight:700;padding-left:6px !important;">Total Summary (@nonZeroReceivables.Count Parties):</td>
                             <td class="cust-num" style="font-weight:700;">Rs @sumCustOpening.ToString("N0")</td>
                             <td class="cust-num" style="font-weight:700;color:#0f5132;">Rs @sumCustBilled.ToString("N0")</td>
                             <td class="cust-num" style="font-weight:700;color:#842029;">Rs @sumCustReceived.ToString("N0")</td>
@@ -831,7 +847,7 @@
             `;
 
             if (window.AarhatApp && window.AarhatApp.openPrintModal) {
-                window.AarhatApp.openPrintModal("Print Supplier Receivables Summary", content);
+                window.AarhatApp.openPrintModal("Print Party Receivables Summary", content);
             } else {
                 window.print();
             }
@@ -841,7 +857,7 @@
         function printCustomerReport() {
             var isSingle = @(Model.IsSingleCustomerView ? "true" : "false");
             if (isSingle) {
-                var customerName = '@(Model.SelectedCustomerName?.Replace("'", "\\'") ?? "Customer")';
+                var customerName = '@(Model.SelectedCustomerName?.Replace("'", "\\'") ?? "Party")';
                 var fromDate = '@Model.FromDate';
                 var toDate = '@Model.ToDate';
                 var totalDebit = @Model.TotalBilled;
@@ -878,7 +894,7 @@
                 }
 
                 if (window.AarhatApp && window.AarhatApp.printLedgerStatement) {
-                    window.AarhatApp.printLedgerStatement(customerName + ' (Customer)', fromDate, toDate, totalDebit, totalCredit, closingBal, entries);
+                    window.AarhatApp.printLedgerStatement(customerName + ' (Party)', fromDate, toDate, totalDebit, totalCredit, closingBal, entries);
                 } else {
                     window.print();
                 }

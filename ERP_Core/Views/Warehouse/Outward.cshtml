@@ -2,14 +2,14 @@
 
 @{
     ViewData["Title"] = "Outward (Stock Out / Gate Pass)";
-    ViewData["SubTitle"] = "Lot select karke maal out karein — remaining stock auto calculate hoga.";
+    ViewData["SubTitle"] = "Release stock by selecting lot — remaining balance is calculated automatically.";
 }
 
 <div class="toolbar">
     <div style="display:flex;gap:10px;align-items:center;">
         <button type="button" class="btn brass" onclick="toggleOutwardForm()">
             <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            Naya Maal Out Karein (Gate Pass)
+            Issue Outward Stock (Gate Pass)
         </button>
         <a asp-action="Inward" class="btn" style="background:var(--surface2);color:var(--text);">
             <i class="fa fa-truck-loading me-1"></i> Inward Lots
@@ -19,7 +19,7 @@
     <!-- Filter Form -->
     <form method="get" asp-action="Outward" style="display:flex;gap:10px;align-items:center;">
         <select name="partyId" class="searchable-select" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
-            <option value="">-- Tamam Customers --</option>
+            <option value="">-- All Parties --</option>
             @if (ViewBag.Parties != null)
             {
                 foreach (var p in ViewBag.Parties)
@@ -48,7 +48,7 @@
 <div class="form-card" id="outwardEntryForm" style="display:none;background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;margin-bottom:20px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <h4 style="color:var(--brass);font-size:15px;font-weight:600;margin:0;">
-            <i class="fa fa-dolly me-1"></i> Maal Release / Outward Entry
+            <i class="fa fa-dolly me-1"></i> Stock Release / Outward Entry
         </h4>
         <button type="button" class="btn" onclick="toggleOutwardForm()" style="padding:4px 8px;font-size:11px;background:transparent;color:var(--text-dim);">&times; Close</button>
     </div>
@@ -62,14 +62,14 @@
             </div>
 
             <div class="field" style="grid-column: span 2;">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Select Lot * (Jisme se maal nikaalna hai)</label>
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Select Lot * (Lot to release goods from)</label>
                 <select name="LotId" id="lotSelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" onchange="onLotSelected()">
-                    <option value="">-- Active Lot Select Karein --</option>
+                    <option value="">-- Select Active Lot --</option>
                     @if (ViewBag.ActiveLots != null)
                     {
                         foreach (var l in ViewBag.ActiveLots)
                         {
-                            <option value="@l.LotId">@l.LotNo — @l.PartyName — @l.ProductName (Mojuda Stock: @l.CurrentRemainingQty)</option>
+                            <option value="@l.LotId">@l.LotNo — @l.PartyName — @l.ProductName (Current Stock: @l.CurrentRemainingQty)</option>
                         }
                     }
                 </select>
@@ -104,7 +104,7 @@
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-top:14px;">
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Out Quantity — Bags nikaalne hain *</label>
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Out Quantity (Qty / Bags to release) *</label>
                 <input type="number" step="any" min="1" name="OutQty" id="outQty" placeholder="e.g. 20" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="calculateBalancePreview()" />
             </div>
 
@@ -120,7 +120,7 @@
 
             <div class="field">
                 <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Receiver Person / Driver</label>
-                <input type="text" name="ReceiverName" placeholder="Receiver ka naam" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+                <input type="text" name="ReceiverName" placeholder="Receiver full name" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
             </div>
 
             <div class="field">
@@ -152,7 +152,7 @@
 
         <div class="field" style="margin-bottom:16px;">
             <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Remarks</label>
-            <input type="text" name="Remarks" placeholder="Maal ki halat, delivery instructions etc." style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            <input type="text" name="Remarks" placeholder="Goods condition, delivery instructions, etc." style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
         </div>
 
         <div style="text-align:right;">
@@ -172,7 +172,7 @@
                 <th style="padding:10px 8px;">Outward No</th>
                 <th style="padding:10px 8px;">Date</th>
                 <th style="padding:10px 8px;">Lot No</th>
-                <th style="padding:10px 8px;">Customer</th>
+                <th style="padding:10px 8px;">Party</th>
                 <th style="padding:10px 8px;">Item</th>
                 <th style="padding:10px 8px;text-align:right;">Out Qty</th>
                 <th style="padding:10px 8px;text-align:right;">Remaining After</th>
@@ -208,7 +208,7 @@
             {
                 <tr>
                     <td colspan="9" style="padding:24px;text-align:center;color:var(--text-dim);">
-                        Koi Outward entry nahi mili.
+                        No outward stock entries found.
                     </td>
                 </tr>
             }
@@ -264,7 +264,7 @@ async function onLotSelected() {
 function calculateBalancePreview() {
     const outQty = parseFloat(document.getElementById('outQty').value) || 0;
     if (outQty > currentMaxStock && currentMaxStock > 0) {
-        alert('Out quantity mojuda stock (' + currentMaxStock + ') se zyada nahi ho sakti!');
+        alert('Outward quantity cannot exceed current remaining stock (' + currentMaxStock + ')!');
         document.getElementById('outQty').value = currentMaxStock;
     }
     const safeOut = parseFloat(document.getElementById('outQty').value) || 0;

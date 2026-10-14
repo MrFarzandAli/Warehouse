@@ -34,8 +34,8 @@ namespace ERP_Core.Controllers.CustomerReceivable
         [Route("Index")]
         public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, int? customerId, int? financialYearId = null, int? fyId = null)
         {
-            ViewData["Title"] = "Customer Receivable";
-            ViewData["SubTitle"] = "Customer wise bikri (sales), wasooli (receipts) aur baqaya balance report.";
+            ViewData["Title"] = "Party Receivable";
+            ViewData["SubTitle"] = "Party-wise storage billing, payments received, and outstanding receivable balance report.";
 
             int companyId = HttpContext.Session.GetInt32("CompanyId") ?? 1;
 

@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Warehouse Stock Position Report";
-    ViewData["SubTitle"] = "Lot-wise mojuda maal, in/out summary aur agle rent ki tareekh.";
+    ViewData["SubTitle"] = "Lot-wise current inventory, dispatch summary, and upcoming monthly rent billing dates.";
 }
 
 <div class="toolbar">
@@ -18,7 +18,7 @@
     <!-- Filter Form -->
     <form method="get" asp-action="StockReport" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
         <select name="partyId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
-            <option value="">-- Tamam Customers --</option>
+            <option value="">-- All Parties --</option>
             @if (ViewBag.Parties != null)
             {
                 foreach (var p in ViewBag.Parties)
@@ -28,7 +28,7 @@
             }
         </select>
         <select name="productId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
-            <option value="">-- Tamam Items --</option>
+            <option value="">-- All Items --</option>
             @if (ViewBag.Products != null)
             {
                 foreach (var pr in ViewBag.Products)
@@ -79,7 +79,7 @@
             <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
                 <th style="padding:10px 8px;">Lot No</th>
                 <th style="padding:10px 8px;">Inward Date</th>
-                <th style="padding:10px 8px;">Customer</th>
+                <th style="padding:10px 8px;">Party</th>
                 <th style="padding:10px 8px;">Item</th>
                 <th style="padding:10px 8px;">Location</th>
                 <th style="padding:10px 8px;text-align:right;">Inward Qty</th>
@@ -128,7 +128,7 @@
             {
                 <tr>
                     <td colspan="11" style="padding:24px;text-align:center;color:var(--text-dim);">
-                        Koi Stock record nahi mila.
+                        No stock records found.
                     </td>
                 </tr>
             }
