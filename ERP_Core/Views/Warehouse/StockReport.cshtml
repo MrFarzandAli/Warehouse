@@ -28,7 +28,7 @@
             }
         </select>
         <select name="productId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
-            <option value="">-- Tamam Products --</option>
+            <option value="">-- Tamam Items --</option>
             @if (ViewBag.Products != null)
             {
                 foreach (var pr in ViewBag.Products)
@@ -80,7 +80,7 @@
                 <th style="padding:10px 8px;">Lot No</th>
                 <th style="padding:10px 8px;">Inward Date</th>
                 <th style="padding:10px 8px;">Party</th>
-                <th style="padding:10px 8px;">Product</th>
+                <th style="padding:10px 8px;">Item</th>
                 <th style="padding:10px 8px;">Location</th>
                 <th style="padding:10px 8px;text-align:right;">Inward Qty</th>
                 <th style="padding:10px 8px;text-align:right;">Out Qty</th>

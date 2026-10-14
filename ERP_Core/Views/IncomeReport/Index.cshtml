@@ -1,0 +1,154 @@
+@{
+    ViewData["Title"] = "Income Report";
+    ViewData["SubTitle"] = "Warehouse ki aamdani — monthly rent bills aur lifter charges, party-wise.";
+}
+
+<!-- Summary Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:14px;margin-bottom:20px;">
+    <div style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:16px;">
+        <span style="font-size:11.5px;color:var(--text-dim);display:block;">Total Bills</span>
+        <b style="font-size:22px;color:var(--text);">@ViewBag.BillCount</b>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:16px;">
+        <span style="font-size:11.5px;color:var(--text-dim);display:block;">Storage Rent Income</span>
+        <b style="font-size:22px;color:var(--brass);">Rs @Convert.ToDecimal(ViewBag.TotalStorageRent).ToString("N0")</b>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:16px;">
+        <span style="font-size:11.5px;color:var(--text-dim);display:block;">Lifter Income (billed)</span>
+        <b style="font-size:22px;color:var(--brass);">Rs @Convert.ToDecimal(ViewBag.TotalLifter).ToString("N0")</b>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:16px;">
+        <span style="font-size:11.5px;color:var(--text-dim);display:block;">Other Charges</span>
+        <b style="font-size:22px;color:var(--text);">Rs @Convert.ToDecimal(ViewBag.TotalOther).ToString("N0")</b>
+    </div>
+    <div style="background:linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.03));border:1px solid var(--brass);border-radius:10px;padding:16px;">
+        <span style="font-size:11.5px;color:var(--text-dim);display:block;">Grand Total Income</span>
+        <b style="font-size:24px;color:var(--brass);">Rs @Convert.ToDecimal(ViewBag.GrandTotal).ToString("N0")</b>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:16px;">
+        <span style="font-size:11.5px;color:var(--text-dim);display:block;">Unbilled Lifter (pending)</span>
+        <b style="font-size:22px;color:var(--red);">Rs @Convert.ToDecimal(ViewBag.UnbilledLifterTotal).ToString("N0")</b>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="toolbar" style="margin-bottom:20px;">
+    <form method="get" asp-action="Index" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input type="date" name="fromDate" value="@ViewBag.FromDate" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" />
+        <span style="color:var(--text-dim);font-size:12px;">se</span>
+        <input type="date" name="toDate" value="@ViewBag.ToDate" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" />
+        <span style="color:var(--text-dim);font-size:12px;">tak</span>
+        <select name="partyId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;">
+            <option value="">-- Tamam Parties --</option>
+            @if (ViewBag.Parties != null)
+            {
+                foreach (var p in ViewBag.Parties)
+                {
+                    <option value="@p.Id" selected="@(ViewBag.SelectedPartyId == p.Id ? "selected" : null)">@p.Name</option>
+                }
+            }
+        </select>
+        <select name="status" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;">
+            <option value="All" selected="@(ViewBag.SelectedStatus == "All" ? "selected" : null)">Tamam Status</option>
+            <option value="Due" selected="@(ViewBag.SelectedStatus == "Due" ? "selected" : null)">Due</option>
+            <option value="Paid" selected="@(ViewBag.SelectedStatus == "Paid" ? "selected" : null)">Paid</option>
+            <option value="Partial" selected="@(ViewBag.SelectedStatus == "Partial" ? "selected" : null)">Partial</option>
+        </select>
+        <button type="submit" class="btn brass" style="padding:7px 18px;">Report Dekhein</button>
+    </form>
+</div>
+
+<!-- Party-wise Summary -->
+<div class="table-card" style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;overflow-x:auto;margin-bottom:20px;">
+    <h4 style="color:var(--brass);font-size:14px;font-weight:700;margin:0 0 12px 0;">Party-wise Aamdani</h4>
+    <table class="table" style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead>
+            <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
+                <th style="padding:10px 8px;">Party</th>
+                <th style="padding:10px 8px;text-align:center;">Bills</th>
+                <th style="padding:10px 8px;text-align:right;">Storage Rent</th>
+                <th style="padding:10px 8px;text-align:right;">Lifter</th>
+                <th style="padding:10px 8px;text-align:right;">Other</th>
+                <th style="padding:10px 8px;text-align:right;">Total</th>
+                <th style="padding:10px 8px;text-align:center;">Paid / Due</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (ViewBag.PartySummary != null && ((System.Collections.IEnumerable)ViewBag.PartySummary).Cast<object>().Any())
+            {
+                foreach (var s in ViewBag.PartySummary)
+                {
+                    <tr style="border-bottom:1px solid var(--border-soft);">
+                        <td style="padding:10px 8px;font-weight:600;">@s.PartyName</td>
+                        <td style="padding:10px 8px;text-align:center;">@s.BillCount</td>
+                        <td style="padding:10px 8px;text-align:right;">Rs @s.StorageRent.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:right;">Rs @s.LifterCharges.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:right;">Rs @s.OtherCharges.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:right;font-weight:700;color:var(--brass);">Rs @s.GrandTotal.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:center;color:var(--text-dim);">@s.PaidBills / @s.DueBills</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="7" style="padding:24px;text-align:center;color:var(--text-dim);">Is period me koi bill nahi mila.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Bill Detail -->
+<div class="table-card" style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;overflow-x:auto;">
+    <h4 style="color:var(--brass);font-size:14px;font-weight:700;margin:0 0 12px 0;">Bill Detail</h4>
+    <table class="table" style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead>
+            <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
+                <th style="padding:10px 8px;">Bill No</th>
+                <th style="padding:10px 8px;">Date</th>
+                <th style="padding:10px 8px;">Party</th>
+                <th style="padding:10px 8px;">Month</th>
+                <th style="padding:10px 8px;text-align:right;">Storage</th>
+                <th style="padding:10px 8px;text-align:right;">Lifter</th>
+                <th style="padding:10px 8px;text-align:right;">Other</th>
+                <th style="padding:10px 8px;text-align:right;">Total</th>
+                <th style="padding:10px 8px;text-align:center;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (ViewBag.Bills != null && ((System.Collections.IEnumerable)ViewBag.Bills).Cast<object>().Any())
+            {
+                foreach (var b in ViewBag.Bills)
+                {
+                    <tr style="border-bottom:1px solid var(--border-soft);">
+                        <td style="padding:10px 8px;font-weight:600;color:var(--brass);">@b.BillNo</td>
+                        <td style="padding:10px 8px;">@b.BillDate.ToString("dd-MMM-yyyy")</td>
+                        <td style="padding:10px 8px;">@(b.Party?.Name ?? "N/A")</td>
+                        <td style="padding:10px 8px;color:var(--text-dim);">@b.BillingMonth</td>
+                        <td style="padding:10px 8px;text-align:right;">@b.StorageRentTotal.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:right;">@b.LifterChargesTotal.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:right;">@b.OtherCharges.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:right;font-weight:700;">@b.GrandTotal.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:center;">
+                            @if (b.Status == "Paid")
+                            {
+                                <span style="background:var(--green-dim);color:var(--green-text);padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;">Paid</span>
+                            }
+                            else if (b.Status == "Partial")
+                            {
+                                <span style="background:rgba(212,175,55,0.15);color:var(--brass);padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;">Partial</span>
+                            }
+                            else
+                            {
+                                <span style="background:var(--red-dim);color:var(--red-text);padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;">Due</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="9" style="padding:24px;text-align:center;color:var(--text-dim);">Is period me koi bill nahi mila.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

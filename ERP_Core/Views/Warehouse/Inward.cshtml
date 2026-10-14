@@ -50,23 +50,32 @@
     </div>
 }
 
-<!-- Inward Lot Entry Collapsible Form -->
-<div class="form-card" id="lotEntryForm" style="display:none;background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;margin-bottom:20px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <h4 style="color:var(--brass);font-size:15px;font-weight:600;margin:0;">
-            <i class="fa fa-truck-loading me-1"></i> Maal Inward Entry (Generate New Lot)
-        </h4>
+<!-- Inward Bilti Entry (Goods Receipt style) -->
+<div class="form-card" id="lotEntryForm" style="display:none;background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:0;margin-bottom:20px;overflow:hidden;">
+    <!-- Bilti Header -->
+    <div style="background:linear-gradient(135deg, rgba(212,175,55,0.12), rgba(212,175,55,0.03));border-bottom:2px dashed var(--brass);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div>
+            <h4 style="color:var(--brass);font-size:16px;font-weight:700;margin:0;letter-spacing:0.5px;">
+                <i class="fa fa-receipt me-1"></i> GOODS INWARD BILTI
+            </h4>
+            <span style="font-size:11.5px;color:var(--text-dim);">Maal ki aamad ki parchi — save karne par Lot No auto generate hoga</span>
+        </div>
+        <div style="text-align:right;">
+            <span style="font-size:11px;color:var(--text-dim);display:block;">Bilti / Lot No</span>
+            <b style="font-size:15px;color:var(--brass);">AUTO (save par banega)</b>
+        </div>
         <button type="button" class="btn" onclick="toggleLotForm()" style="padding:4px 8px;font-size:11px;background:transparent;color:var(--text-dim);">&times; Close</button>
     </div>
 
-    <form asp-action="CreateLot" method="post" id="mainLotForm">
+    <form asp-action="CreateLot" method="post" id="mainLotForm" style="padding:20px;">
         @Html.AntiForgeryToken()
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;">
+
+        <!-- Row 1: Date / Party / Vehicle -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:15px;">
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Inward Date *</label>
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Bilti Date *</label>
                 <input type="date" name="InwardDate" id="inwardDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" onchange="calculateRentPreview()" />
             </div>
-
             <div class="field">
                 <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Party / Customer *</label>
                 <select name="PartyId" id="partySelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
@@ -80,42 +89,66 @@
                     }
                 </select>
             </div>
-
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Product / Commodity *</label>
-                <select name="ProductId" id="productSelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
-                    <option value="">-- Product Select Karein --</option>
-                    @if (ViewBag.Products != null)
-                    {
-                        foreach (var prod in ViewBag.Products)
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Vehicle / Gari No</label>
+                <input type="text" name="VehicleNo" placeholder="e.g. JU-5432" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+        </div>
+
+        <!-- Item line: bilti item row -->
+        <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:15px;">
+            <div style="background:var(--surface2);padding:8px 14px;font-size:12px;font-weight:700;color:var(--text);border-bottom:1px solid var(--border);">
+                Maal Ki Tafseel (Item Detail)
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:0;">
+                <div style="padding:12px 14px;border-right:1px solid var(--border-soft);">
+                    <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Item *</label>
+                    <select name="ProductId" id="productSelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                        <option value="">-- Item Select Karein --</option>
+                        @if (ViewBag.Products != null)
                         {
-                            <option value="@prod.Id">@prod.Name (@prod.Unit)</option>
+                            foreach (var prod in ViewBag.Products)
+                            {
+                                <option value="@prod.Id">@prod.Name (@prod.Unit)</option>
+                            }
                         }
-                    }
-                </select>
+                    </select>
+                    <div style="margin-top:8px;">
+                        <a href="/ItemMaster" target="_blank" style="font-size:11px;color:var(--brass);">+ Naya item add karein (Item Master)</a>
+                    </div>
+                </div>
+                <div style="padding:12px 14px;border-right:1px solid var(--border-soft);">
+                    <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Qty (Bags) *</label>
+                    <input type="number" step="any" min="1" name="OriginalQty" id="inwardQty" placeholder="e.g. 5" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:15px;font-weight:700;" oninput="calculateRentPreview()" />
+                </div>
+                <div style="padding:12px 14px;border-right:1px solid var(--border-soft);">
+                    <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Rate (per bag/month) *</label>
+                    <input type="number" step="any" min="0" name="MonthlyRentRate" id="monthlyRate" placeholder="e.g. 100" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:15px;font-weight:700;" oninput="calculateRentPreview()" />
+                </div>
+                <div style="padding:12px 14px;background:rgba(212,175,55,0.05);">
+                    <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Amount (Qty × Rate)</label>
+                    <div id="previewRentAmount" style="font-size:20px;font-weight:800;color:var(--brass);padding:4px 0;">Rs 0</div>
+                </div>
             </div>
+        </div>
 
-            <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Inward Quantity (Qty) *</label>
-                <input type="number" step="any" min="1" name="OriginalQty" id="inwardQty" placeholder="e.g. 100" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="calculateRentPreview()" />
-            </div>
-
-            <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Monthly Rent Rate (per unit) *</label>
-                <input type="number" step="any" min="0" name="MonthlyRentRate" id="monthlyRate" placeholder="e.g. 50" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="calculateRentPreview()" />
-            </div>
-
+        <!-- Row 3: Location / Lifter / Remarks -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:15px;">
             <div class="field">
                 <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Bay / Rack Location</label>
                 <input type="text" name="BayOrLocation" placeholder="e.g. Bay A-12, Godown 2" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
             </div>
+            <div class="field" style="grid-column:span 2;">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Remarks / Notes</label>
+                <input type="text" name="Remarks" placeholder="Driver name, maal ki halat etc." style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
         </div>
 
-        <!-- Rent Calculation Preview Box -->
-        <div style="background:var(--surface2);border-left:4px solid var(--brass);padding:12px 16px;border-radius:6px;margin:16px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-            <div>
-                <span style="font-size:11.5px;color:var(--text-dim);display:block;">Estimated First Month Storage Rent:</span>
-                <b id="previewRentAmount" style="font-size:17px;color:var(--brass);">Rs 0.00</b>
+        <!-- Auto billing info strip -->
+        <div style="background:var(--surface2);border-left:4px solid var(--brass);padding:12px 16px;border-radius:6px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div style="font-size:12px;color:var(--text-dim);">
+                <i class="fa fa-info-circle me-1"></i>
+                Agle mahine isi tareekh ko <b style="color:var(--text);">bache hue stock</b> par bill auto-generate hoga.
             </div>
             <div>
                 <span style="font-size:11.5px;color:var(--text-dim);display:block;">Auto Next Billing Date:</span>
@@ -142,15 +175,10 @@
             </div>
         </div>
 
-        <div class="field" style="margin-bottom:16px;">
-            <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Remarks / Notes</label>
-            <input type="text" name="Remarks" placeholder="Gari no, driver name, condition etc." style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
-        </div>
-
-        <div style="text-align:right;">
+        <div style="text-align:right;border-top:2px dashed var(--brass);padding-top:16px;">
             <button type="button" class="btn" onclick="toggleLotForm()" style="background:var(--surface2);color:var(--text);margin-right:8px;">Cancel</button>
-            <button type="submit" class="btn brass" style="padding:8px 24px;">
-                <i class="fa fa-save me-1"></i> Save Inward Lot
+            <button type="submit" class="btn brass" style="padding:10px 32px;font-size:14px;font-weight:700;">
+                <i class="fa fa-save me-1"></i> Bilti Save Karein — Lot Banayein
             </button>
         </div>
     </form>
@@ -164,10 +192,11 @@
                 <th style="padding:10px 8px;">Lot No</th>
                 <th style="padding:10px 8px;">Inward Date</th>
                 <th style="padding:10px 8px;">Party</th>
-                <th style="padding:10px 8px;">Product</th>
+                <th style="padding:10px 8px;">Item</th>
                 <th style="padding:10px 8px;text-align:right;">Inward Qty</th>
                 <th style="padding:10px 8px;text-align:right;">Remaining Qty</th>
                 <th style="padding:10px 8px;text-align:right;">Rate/Mo</th>
+                <th style="padding:10px 8px;">Vehicle</th>
                 <th style="padding:10px 8px;">Location</th>
                 <th style="padding:10px 8px;">Next Bill Date</th>
                 <th style="padding:10px 8px;text-align:center;">Status</th>
@@ -190,6 +219,7 @@
                             @lot.CurrentRemainingQty.ToString("N0")
                         </td>
                         <td style="padding:10px 8px;text-align:right;">Rs @lot.MonthlyRentRate.ToString("N0")</td>
+                        <td style="padding:10px 8px;color:var(--text-dim);">@(lot.VehicleNo ?? "-")</td>
                         <td style="padding:10px 8px;color:var(--text-dim);">@(lot.BayOrLocation ?? "-")</td>
                         <td style="padding:10px 8px;color:@(lot.NextBillingDate <= DateTime.Today && lot.CurrentRemainingQty > 0 ? "var(--red)" : "var(--text)");">
                             @lot.NextBillingDate.ToString("dd-MMM-yyyy")
@@ -210,7 +240,7 @@
             else
             {
                 <tr>
-                    <td colspan="10" style="padding:24px;text-align:center;color:var(--text-dim);">
+                    <td colspan="11" style="padding:24px;text-align:center;color:var(--text-dim);">
                         Koi Inward Lot nahi mili. Naya maal inward karne ke liye upar diye gaye button par click karein.
                     </td>
                 </tr>

@@ -27,7 +27,7 @@ namespace ERP_Core.Models
         public int PartyId { get; set; }
 
         [Required]
-        [Display(Name = "Product / Item")]
+        [Display(Name = "Item")]
         public int ProductId { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
@@ -61,6 +61,11 @@ namespace ERP_Core.Models
         [Display(Name = "Status")]
         public string Status { get; set; } = "Active"; // Active, Closed
 
+        [MaxLength(50)]
+        [Column(TypeName = "varchar(50)")]
+        [Display(Name = "Vehicle No")]
+        public string? VehicleNo { get; set; }
+
         [MaxLength(500)]
         public string? Remarks { get; set; }
 
@@ -71,7 +76,7 @@ namespace ERP_Core.Models
         public virtual Vendor? Party { get; set; }
 
         [ForeignKey(nameof(ProductId))]
-        public virtual Fish? Product { get; set; }
+        public virtual WarehouseItem? Product { get; set; }
 
         public virtual ICollection<WarehouseStockOutward> OutwardEntries { get; set; } = new List<WarehouseStockOutward>();
         public virtual ICollection<WarehouseLifterUsage> LifterUsages { get; set; } = new List<WarehouseLifterUsage>();

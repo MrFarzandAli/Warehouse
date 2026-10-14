@@ -1,0 +1,200 @@
+@model List<ERP_Core.Models.WarehouseItem>
+
+@{
+    ViewData["Title"] = "Item Master";
+    ViewData["SubTitle"] = "Warehouse items / products ki list — inward aur billing me yehi items aayenge.";
+}
+
+<div class="toolbar">
+    <div style="display:flex;gap:10px;align-items:center;">
+        <button type="button" class="btn brass" onclick="toggleItemForm()">
+            <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Naya Item Add Karein
+        </button>
+    </div>
+
+    <form method="get" asp-action="Index" style="display:flex;gap:10px;align-items:center;">
+        <input type="text" name="search" value="@ViewBag.Search" placeholder="Search item..."
+               style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" />
+        <select name="category" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
+            <option value="All">-- Tamam Categories --</option>
+            @if (ViewBag.Categories != null)
+            {
+                foreach (var c in ViewBag.Categories)
+                {
+                    <option value="@c" selected="@(ViewBag.SelectedCategory == c ? "selected" : null)">@c</option>
+                }
+            }
+        </select>
+        <button type="submit" class="btn" style="background:var(--surface2);color:var(--text);padding:7px 14px;">Search</button>
+    </form>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div style="background:var(--green-dim);color:var(--green-text);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;border:1px solid var(--border);">
+        <i class="fa fa-check-circle me-1"></i> @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div style="background:var(--red-dim);color:var(--red-text);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;border:1px solid var(--border);">
+        <i class="fa fa-exclamation-triangle me-1"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Add / Edit Form -->
+<div class="form-card" id="itemEntryForm" style="display:none;background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;margin-bottom:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h4 style="color:var(--brass);font-size:15px;font-weight:600;margin:0;" id="itemFormTitle">
+            <i class="fa fa-box me-1"></i> Naya Item
+        </h4>
+        <button type="button" class="btn" onclick="toggleItemForm()" style="padding:4px 8px;font-size:11px;background:transparent;color:var(--text-dim);">&times; Close</button>
+    </div>
+
+    <form asp-action="Save" method="post" id="itemForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" id="itemId" value="0" />
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;">
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Item Code</label>
+                <input type="text" name="Code" id="itemCode" placeholder="Auto (e.g. ITM-0001)" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Item Name *</label>
+                <input type="text" name="Name" id="itemName" placeholder="e.g. Rice Bag 50kg" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Unit</label>
+                <select name="Unit" id="itemUnit" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                    <option value="Bag" selected>Bag</option>
+                    <option value="Kg">Kg</option>
+                    <option value="Box">Box</option>
+                    <option value="Carton">Carton</option>
+                    <option value="Piece">Piece</option>
+                    <option value="Litre">Litre</option>
+                    <option value="Ton">Ton</option>
+                    <option value="Pallet">Pallet</option>
+                </select>
+            </div>
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Category</label>
+                <input type="text" name="Category" id="itemCategory" placeholder="e.g. Grains, Electronics" list="categoryList" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+                <datalist id="categoryList">
+                    @if (ViewBag.Categories != null)
+                    {
+                        foreach (var c in ViewBag.Categories)
+                        {
+                            <option value="@c"></option>
+                        }
+                    }
+                </datalist>
+            </div>
+        </div>
+        <div class="field" style="margin:14px 0;">
+            <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Description</label>
+            <input type="text" name="Description" id="itemDescription" placeholder="Optional detail" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+        </div>
+        <div style="text-align:right;">
+            <button type="button" class="btn" onclick="resetItemForm()" style="background:var(--surface2);color:var(--text);margin-right:8px;">Reset</button>
+            <button type="submit" class="btn brass" style="padding:8px 24px;">
+                <i class="fa fa-save me-1"></i> Save Item
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="table-card" style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;overflow-x:auto;">
+    <table class="table" style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead>
+            <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
+                <th style="padding:10px 8px;">Code</th>
+                <th style="padding:10px 8px;">Item Name</th>
+                <th style="padding:10px 8px;">Unit</th>
+                <th style="padding:10px 8px;">Category</th>
+                <th style="padding:10px 8px;">Description</th>
+                <th style="padding:10px 8px;text-align:center;">Status</th>
+                <th style="padding:10px 8px;text-align:center;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <tr style="border-bottom:1px solid var(--border-soft);">
+                        <td style="padding:10px 8px;font-weight:600;color:var(--brass);">@(item.Code ?? "-")</td>
+                        <td style="padding:10px 8px;font-weight:500;">@item.Name</td>
+                        <td style="padding:10px 8px;">@item.Unit</td>
+                        <td style="padding:10px 8px;color:var(--text-dim);">@(item.Category ?? "-")</td>
+                        <td style="padding:10px 8px;color:var(--text-dim);">@(item.Description ?? "-")</td>
+                        <td style="padding:10px 8px;text-align:center;">
+                            @if (item.Active == true)
+                            {
+                                <span style="background:var(--green-dim);color:var(--green-text);padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;">Active</span>
+                            }
+                            else
+                            {
+                                <span style="background:var(--surface2);color:var(--text-dim);padding:3px 8px;border-radius:12px;font-size:11px;">Inactive</span>
+                            }
+                        </td>
+                        <td style="padding:10px 8px;text-align:center;white-space:nowrap;">
+                            <button type="button" class="btn" style="padding:4px 10px;font-size:11px;background:var(--surface2);color:var(--text);" onclick="editItem(@item.Id)">
+                                <i class="fa fa-edit"></i> Edit
+                            </button>
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;" onsubmit="return confirm('Is item ko inactive karna hai?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn" style="padding:4px 10px;font-size:11px;background:transparent;color:var(--red);border:1px solid var(--red);">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" style="padding:24px;text-align:center;color:var(--text-dim);">
+                        Koi item nahi mila. Upar diye gaye button se naya item add karein.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+<script>
+function toggleItemForm() {
+    const form = document.getElementById('itemEntryForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function resetItemForm() {
+    document.getElementById('itemForm').reset();
+    document.getElementById('itemId').value = '0';
+    document.getElementById('itemFormTitle').innerHTML = '<i class="fa fa-box me-1"></i> Naya Item';
+}
+
+async function editItem(id) {
+    try {
+        const response = await fetch(`/ItemMaster/GetById/${id}`);
+        if (response.ok) {
+            const d = await response.json();
+            document.getElementById('itemId').value = d.id;
+            document.getElementById('itemCode').value = d.code;
+            document.getElementById('itemName').value = d.name;
+            document.getElementById('itemUnit').value = d.unit;
+            document.getElementById('itemCategory').value = d.category;
+            document.getElementById('itemDescription').value = d.description;
+            document.getElementById('itemFormTitle').innerHTML = '<i class="fa fa-edit me-1"></i> Item Edit Karein';
+            const form = document.getElementById('itemEntryForm');
+            form.style.display = 'block';
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+    } catch (e) { console.error(e); }
+}
+</script>
+}

@@ -18,6 +18,7 @@ namespace ERP_Core.Dtos
         public bool UseLifter { get; set; } = false;
         public decimal LifterQtyOrHours { get; set; } = 1;
         public decimal LifterRate { get; set; } = 0;
+        public string? VehicleNo { get; set; }
     }
 
     public class StockOutwardCreateDto

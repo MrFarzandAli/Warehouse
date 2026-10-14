@@ -79,7 +79,7 @@ namespace ERP_Core.Controllers.Warehouse
                 .Select(v => new { v.Id, v.Name, v.Phone })
                 .ToListAsync();
 
-            ViewBag.Products = await _context.Fishes
+            ViewBag.Products = await _context.WarehouseItems
                 .Where(p => p.Active == true || p.Active == null)
                 .OrderBy(p => p.Name)
                 .Select(p => new { p.Id, p.Name, p.Code, p.Unit })
@@ -98,7 +98,7 @@ namespace ERP_Core.Controllers.Warehouse
         {
             if (dto.PartyId <= 0 || dto.ProductId <= 0 || dto.OriginalQty <= 0 || dto.MonthlyRentRate <= 0)
             {
-                TempData["ErrorMessage"] = "Party, Product, Quantity aur Monthly Rate required hain!";
+                TempData["ErrorMessage"] = "Party, Item, Quantity aur Monthly Rate required hain!";
                 return RedirectToAction(nameof(Inward));
             }
 
@@ -135,6 +135,7 @@ namespace ERP_Core.Controllers.Warehouse
                     FirstMonthAmount = firstMonthAmount,
                     NextBillingDate = nextBillingDate,
                     BayOrLocation = dto.BayOrLocation,
+                    VehicleNo = dto.VehicleNo,
                     Status = "Active",
                     Remarks = dto.Remarks,
                     CompanyId = companyId,
@@ -801,7 +802,7 @@ namespace ERP_Core.Controllers.Warehouse
                 .Select(v => new { v.Id, v.Name })
                 .ToListAsync();
 
-            ViewBag.Products = await _context.Fishes
+            ViewBag.Products = await _context.WarehouseItems
                 .Where(p => p.Active == true || p.Active == null)
                 .OrderBy(p => p.Name)
                 .Select(p => new { p.Id, p.Name })

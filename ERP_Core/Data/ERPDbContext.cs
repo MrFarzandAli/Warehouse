@@ -33,6 +33,7 @@ namespace ERP_Core.Data
         public DbSet<AccountTransaction> AccountTransactions { get; set; }
         public DbSet<SupplierDistributionMaster> SupplierDistributionMasters { get; set; }
         public DbSet<SupplierDistributionDetail> SupplierDistributionDetails { get; set; }
+        public DbSet<WarehouseItem> WarehouseItems { get; set; }
         public DbSet<WarehouseLot> WarehouseLots { get; set; }
         public DbSet<WarehouseStockOutward> WarehouseStockOutwards { get; set; }
         public DbSet<WarehouseLifterUsage> WarehouseLifterUsages { get; set; }
