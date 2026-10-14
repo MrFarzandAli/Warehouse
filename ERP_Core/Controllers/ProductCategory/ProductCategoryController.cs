@@ -466,11 +466,11 @@ namespace ERP_Core.Controllers.ProductCategory
 
                 var defaults = new List<Models.ProductCategory>
                 {
-                    new Models.ProductCategory { Code = "CTG-0001", Name = "Fresh Sea Fish", Active = true, SaleAccountId = salesAcc?.Id, PurchaseAccountId = purchaseAcc?.Id, CreatedBy = "System", CreatedOn = DateTime.Now },
-                    new Models.ProductCategory { Code = "CTG-0002", Name = "River Fish (Meetha Pani)", Active = true, SaleAccountId = salesAcc?.Id, PurchaseAccountId = purchaseAcc?.Id, CreatedBy = "System", CreatedOn = DateTime.Now },
-                    new Models.ProductCategory { Code = "CTG-0003", Name = "Shrimps & Prawns", Active = true, SaleAccountId = salesAcc?.Id, PurchaseAccountId = purchaseAcc?.Id, CreatedBy = "System", CreatedOn = DateTime.Now },
-                    new Models.ProductCategory { Code = "CTG-0004", Name = "Frozen Seafood Export", Active = true, SaleAccountId = salesAcc?.Id, PurchaseAccountId = purchaseAcc?.Id, CreatedBy = "System", CreatedOn = DateTime.Now },
-                    new Models.ProductCategory { Code = "CTG-0005", Name = "Dry Fish & Fish Powder", Active = true, SaleAccountId = salesAcc?.Id, PurchaseAccountId = purchaseAcc?.Id, CreatedBy = "System", CreatedOn = DateTime.Now }
+                    new Models.ProductCategory { Code = "CTG-0001", Name = "General Goods", Active = true, SaleAccountId = salesAcc?.Id, PurchaseAccountId = purchaseAcc?.Id, CreatedBy = "System", CreatedOn = DateTime.Now },
+                    new Models.ProductCategory { Code = "CTG-0002", Name = "Food & Grains", Active = true, SaleAccountId = salesAcc?.Id, PurchaseAccountId = purchaseAcc?.Id, CreatedBy = "System", CreatedOn = DateTime.Now },
+                    new Models.ProductCategory { Code = "CTG-0003", Name = "Electronics", Active = true, SaleAccountId = salesAcc?.Id, PurchaseAccountId = purchaseAcc?.Id, CreatedBy = "System", CreatedOn = DateTime.Now },
+                    new Models.ProductCategory { Code = "CTG-0004", Name = "Textiles", Active = true, SaleAccountId = salesAcc?.Id, PurchaseAccountId = purchaseAcc?.Id, CreatedBy = "System", CreatedOn = DateTime.Now },
+                    new Models.ProductCategory { Code = "CTG-0005", Name = "Miscellaneous", Active = true, SaleAccountId = salesAcc?.Id, PurchaseAccountId = purchaseAcc?.Id, CreatedBy = "System", CreatedOn = DateTime.Now }
                 };
 
                 await _context.ProductCategories.AddRangeAsync(defaults);

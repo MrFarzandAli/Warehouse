@@ -1,0 +1,176 @@
+@model List<ERP_Core.Models.LifterRate>
+
+@{
+    ViewData["Title"] = "Lifter Rates";
+    ViewData["SubTitle"] = "Har lifter ka normal aur peak time rate yahan set karein — entry form yahin se rate uthayega.";
+}
+
+<div class="toolbar">
+    <div style="display:flex;gap:10px;align-items:center;">
+        <button type="button" class="btn brass" onclick="toggleRateForm()">
+            <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Naya Rate Add Karein
+        </button>
+        <a asp-controller="Warehouse" asp-action="Lifter" class="btn" style="background:var(--surface2);color:var(--text);">
+            <i class="fa fa-pallet me-1"></i> Lifter Usage Entries
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div style="background:var(--green-dim);color:var(--green-text);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;border:1px solid var(--border);">
+        <i class="fa fa-check-circle me-1"></i> @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div style="background:var(--red-dim);color:var(--red-text);padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;border:1px solid var(--border);">
+        <i class="fa fa-exclamation-triangle me-1"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Add / Edit Form -->
+<div class="form-card" id="rateEntryForm" style="display:none;background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;margin-bottom:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h4 style="color:var(--brass);font-size:15px;font-weight:600;margin:0;" id="rateFormTitle">
+            <i class="fa fa-tags me-1"></i> Naya Lifter Rate
+        </h4>
+        <button type="button" class="btn" onclick="toggleRateForm()" style="padding:4px 8px;font-size:11px;background:transparent;color:var(--text-dim);">&times; Close</button>
+    </div>
+
+    <form asp-action="Save" method="post" id="rateForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" id="rateId" value="0" />
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;">
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Equipment Name *</label>
+                <input type="text" name="EquipmentName" id="equipmentName" placeholder="e.g. Lifter 1, Forklift A" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Normal Time Rate (Rs/hour) *</label>
+                <input type="number" step="any" min="0" name="NormalRate" id="normalRate" placeholder="e.g. 1200" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Peak Time Rate (Rs/hour) *</label>
+                <input type="number" step="any" min="0" name="PeakRate" id="peakRate" placeholder="e.g. 1800" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Peak Start Time</label>
+                <input type="time" name="PeakStartTime" id="peakStart" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Peak End Time</label>
+                <input type="time" name="PeakEndTime" id="peakEnd" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            </div>
+        </div>
+        <div class="field" style="margin:14px 0;">
+            <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Remarks</label>
+            <input type="text" name="Remarks" id="rateRemarks" placeholder="Optional" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+        </div>
+        <div style="text-align:right;">
+            <button type="button" class="btn" onclick="resetRateForm()" style="background:var(--surface2);color:var(--text);margin-right:8px;">Reset</button>
+            <button type="submit" class="btn brass" style="padding:8px 24px;">
+                <i class="fa fa-save me-1"></i> Save Rate
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Table -->
+<div class="table-card" style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;overflow-x:auto;">
+    <table class="table" style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead>
+            <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
+                <th style="padding:10px 8px;">Equipment</th>
+                <th style="padding:10px 8px;text-align:right;">Normal Rate</th>
+                <th style="padding:10px 8px;text-align:right;">Peak Rate</th>
+                <th style="padding:10px 8px;">Peak Hours</th>
+                <th style="padding:10px 8px;">Remarks</th>
+                <th style="padding:10px 8px;text-align:center;">Status</th>
+                <th style="padding:10px 8px;text-align:center;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var r in Model)
+                {
+                    <tr style="border-bottom:1px solid var(--border-soft);">
+                        <td style="padding:10px 8px;font-weight:600;color:var(--brass);">@r.EquipmentName</td>
+                        <td style="padding:10px 8px;text-align:right;">Rs @r.NormalRate.ToString("N0")</td>
+                        <td style="padding:10px 8px;text-align:right;font-weight:700;">Rs @r.PeakRate.ToString("N0")</td>
+                        <td style="padding:10px 8px;color:var(--text-dim);">
+                            @(r.PeakStartTime.HasValue && r.PeakEndTime.HasValue ? $"{r.PeakStartTime:hh\\:mm} - {r.PeakEndTime:hh\\:mm}" : "-")
+                        </td>
+                        <td style="padding:10px 8px;color:var(--text-dim);">@(r.Remarks ?? "-")</td>
+                        <td style="padding:10px 8px;text-align:center;">
+                            @if (r.Active == true)
+                            {
+                                <span style="background:var(--green-dim);color:var(--green-text);padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;">Active</span>
+                            }
+                            else
+                            {
+                                <span style="background:var(--surface2);color:var(--text-dim);padding:3px 8px;border-radius:12px;font-size:11px;">Inactive</span>
+                            }
+                        </td>
+                        <td style="padding:10px 8px;text-align:center;white-space:nowrap;">
+                            <button type="button" class="btn" style="padding:4px 10px;font-size:11px;background:var(--surface2);color:var(--text);" onclick="editRate(@r.Id)">
+                                <i class="fa fa-edit"></i> Edit
+                            </button>
+                            <form asp-action="Delete" asp-route-id="@r.Id" method="post" style="display:inline;" onsubmit="return confirm('Is rate ko inactive karna hai?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn" style="padding:4px 10px;font-size:11px;background:transparent;color:var(--red);border:1px solid var(--red);">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" style="padding:24px;text-align:center;color:var(--text-dim);">
+                        Koi rate set nahi hai. Upar diye gaye button se lifter ka normal/peak rate add karein.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+<script>
+function toggleRateForm() {
+    const form = document.getElementById('rateEntryForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function resetRateForm() {
+    document.getElementById('rateForm').reset();
+    document.getElementById('rateId').value = '0';
+    document.getElementById('rateFormTitle').innerHTML = '<i class="fa fa-tags me-1"></i> Naya Lifter Rate';
+}
+
+async function editRate(id) {
+    try {
+        const response = await fetch(`/LifterRate/GetById/${id}`);
+        if (response.ok) {
+            const d = await response.json();
+            document.getElementById('rateId').value = d.id;
+            document.getElementById('equipmentName').value = d.equipmentName;
+            document.getElementById('normalRate').value = d.normalRate;
+            document.getElementById('peakRate').value = d.peakRate;
+            document.getElementById('peakStart').value = d.peakStartTime;
+            document.getElementById('peakEnd').value = d.peakEndTime;
+            document.getElementById('rateRemarks').value = d.remarks;
+            document.getElementById('rateFormTitle').innerHTML = '<i class="fa fa-edit me-1"></i> Rate Edit Karein';
+            const form = document.getElementById('rateEntryForm');
+            form.style.display = 'block';
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+    } catch (e) { console.error(e); }
+}
+</script>
+}

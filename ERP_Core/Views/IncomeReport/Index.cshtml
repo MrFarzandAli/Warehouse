@@ -39,7 +39,7 @@
         <input type="date" name="toDate" value="@ViewBag.ToDate" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" />
         <span style="color:var(--text-dim);font-size:12px;">tak</span>
         <select name="partyId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;">
-            <option value="">-- Tamam Parties --</option>
+            <option value="">-- Tamam Customers --</option>
             @if (ViewBag.Parties != null)
             {
                 foreach (var p in ViewBag.Parties)
@@ -64,7 +64,7 @@
     <table class="table" style="width:100%;border-collapse:collapse;font-size:12.5px;">
         <thead>
             <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
-                <th style="padding:10px 8px;">Party</th>
+                <th style="padding:10px 8px;">Customer</th>
                 <th style="padding:10px 8px;text-align:center;">Bills</th>
                 <th style="padding:10px 8px;text-align:right;">Storage Rent</th>
                 <th style="padding:10px 8px;text-align:right;">Lifter</th>
@@ -105,7 +105,7 @@
             <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
                 <th style="padding:10px 8px;">Bill No</th>
                 <th style="padding:10px 8px;">Date</th>
-                <th style="padding:10px 8px;">Party</th>
+                <th style="padding:10px 8px;">Customer</th>
                 <th style="padding:10px 8px;">Month</th>
                 <th style="padding:10px 8px;text-align:right;">Storage</th>
                 <th style="padding:10px 8px;text-align:right;">Lifter</th>

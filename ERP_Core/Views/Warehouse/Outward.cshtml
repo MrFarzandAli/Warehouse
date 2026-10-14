@@ -19,7 +19,7 @@
     <!-- Filter Form -->
     <form method="get" asp-action="Outward" style="display:flex;gap:10px;align-items:center;">
         <select name="partyId" class="searchable-select" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
-            <option value="">-- Tamam Parties --</option>
+            <option value="">-- Tamam Customers --</option>
             @if (ViewBag.Parties != null)
             {
                 foreach (var p in ViewBag.Parties)
@@ -129,7 +129,8 @@
             </div>
         </div>
 
-        <!-- Lifter Option -->
+        @* LIFTER INLINE OPTION DISABLED 2026-10-15 — lifter ka alag form hai (Warehouse > Lifter), wahan se entry hogi.
+<!-- Lifter Option -->
         <div style="border:1px dashed var(--border);padding:12px 16px;border-radius:8px;margin:16px 0;background:rgba(212,175,55,0.03);">
             <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--text);cursor:pointer;">
                 <input type="checkbox" name="UseLifter" id="useLifterOutCheck" value="true" style="accent-color:var(--brass);width:16px;height:16px;" onchange="toggleLifterOutFields()" />
@@ -147,6 +148,7 @@
                 </div>
             </div>
         </div>
+*@
 
         <div class="field" style="margin-bottom:16px;">
             <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Remarks</label>
@@ -170,7 +172,7 @@
                 <th style="padding:10px 8px;">Outward No</th>
                 <th style="padding:10px 8px;">Date</th>
                 <th style="padding:10px 8px;">Lot No</th>
-                <th style="padding:10px 8px;">Party</th>
+                <th style="padding:10px 8px;">Customer</th>
                 <th style="padding:10px 8px;">Item</th>
                 <th style="padding:10px 8px;text-align:right;">Out Qty</th>
                 <th style="padding:10px 8px;text-align:right;">Remaining After</th>

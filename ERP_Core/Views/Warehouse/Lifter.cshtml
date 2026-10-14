@@ -18,7 +18,7 @@
     <!-- Filter Form -->
     <form method="get" asp-action="Lifter" style="display:flex;gap:10px;align-items:center;">
         <select name="partyId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
-            <option value="">-- Tamam Parties --</option>
+            <option value="">-- Tamam Customers --</option>
             @if (ViewBag.Parties != null)
             {
                 foreach (var p in ViewBag.Parties)
@@ -66,9 +66,9 @@
             </div>
 
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Party / Customer *</label>
-                <select name="PartyId" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
-                    <option value="">-- Party Select Karein --</option>
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Customer *</label>
+                <select name="PartyId" id="lifterPartySelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                    <option value="">-- Customer Select Karein --</option>
                     @if (ViewBag.Parties != null)
                     {
                         foreach (var p in ViewBag.Parties)
@@ -77,19 +77,38 @@
                         }
                     }
                 </select>
+                <span style="font-size:10.5px;color:var(--text-dim);">Lot select karne par customer khud set ho jayega</span>
             </div>
 
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Associated Lot (Optional)</label>
-                <select name="LotId" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
-                    <option value="">-- No Lot Linked (General Lifter Work) --</option>
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Associated Lot *</label>
+                <select name="LotId" id="lifterLotSelect" required onchange="onLifterLotSelected()" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                    <option value="">-- Lot Select Karein --</option>
                     @if (ViewBag.ActiveLots != null)
                     {
                         foreach (var l in ViewBag.ActiveLots)
                         {
-                            <option value="@l.LotId">@l.LotNo (@l.PartyName)</option>
+                            <option value="@l.LotId">@l.LotNo (@l.PartyName) — @l.ProductName</option>
                         }
                     }
+                </select>
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Equipment *</label>
+                <select name="EquipmentName" id="lifterEquipment" onchange="onLifterRateTypeChanged()" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                    <option value="">-- Lifter Select Karein --</option>
+                </select>
+                <div style="margin-top:6px;">
+                    <a href="/LifterRate" target="_blank" style="font-size:11px;color:var(--brass);">+ Rates set karein (Lifter Rate Master)</a>
+                </div>
+            </div>
+
+            <div class="field">
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Rate Type</label>
+                <select id="lifterRateType" onchange="onLifterRateTypeChanged()" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                    <option value="Normal">Normal Time</option>
+                    <option value="Peak">Peak Time</option>
                 </select>
             </div>
 
@@ -108,7 +127,7 @@
             </div>
 
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Lifter Rate (Rs) *</label>
+                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Lifter Rate (Rs) * <span style="color:var(--brass);font-weight:400;">— master se auto</span></label>
                 <input type="number" step="any" min="0" name="Rate" id="lifterUnitRate" placeholder="e.g. 1500" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="updateLifterTotal()" />
             </div>
 
@@ -143,7 +162,7 @@
         <thead>
             <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
                 <th style="padding:10px 8px;">Date</th>
-                <th style="padding:10px 8px;">Party</th>
+                <th style="padding:10px 8px;">Customer</th>
                 <th style="padding:10px 8px;">Lot Linked</th>
                 <th style="padding:10px 8px;">Basis</th>
                 <th style="padding:10px 8px;text-align:right;">Hours / Qty</th>
@@ -194,9 +213,55 @@
 
 @section Scripts {
 <script>
+let lifterRatesCache = [];
+
 function toggleLifterModal() {
     const form = document.getElementById('lifterEntryForm');
-    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    const opening = form.style.display === 'none';
+    form.style.display = opening ? 'block' : 'none';
+    if (opening) loadLifterRates();
+}
+
+async function loadLifterRates() {
+    try {
+        const res = await fetch('/Warehouse/GetLifterRates');
+        if (!res.ok) return;
+        lifterRatesCache = await res.json();
+        const sel = document.getElementById('lifterEquipment');
+        const current = sel.value;
+        sel.innerHTML = '<option value="">-- Lifter Select Karein --</option>';
+        lifterRatesCache.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.equipmentName;
+            opt.textContent = r.equipmentName + ' (N: Rs ' + r.normalRate + ' / P: Rs ' + r.peakRate + ')';
+            sel.appendChild(opt);
+        });
+        if (current) sel.value = current;
+        onLifterRateTypeChanged();
+    } catch (e) { console.error(e); }
+}
+
+function onLifterRateTypeChanged() {
+    const equipName = document.getElementById('lifterEquipment').value;
+    const rateType = document.getElementById('lifterRateType').value;
+    const rate = lifterRatesCache.find(r => r.equipmentName === equipName);
+    if (rate) {
+        document.getElementById('lifterUnitRate').value = rateType === 'Peak' ? rate.peakRate : rate.normalRate;
+        updateLifterTotal();
+    }
+}
+
+async function onLifterLotSelected() {
+    const lotId = document.getElementById('lifterLotSelect').value;
+    if (!lotId) return;
+    try {
+        const res = await fetch('/Warehouse/GetLotDetails/' + lotId);
+        if (res.ok) {
+            const d = await res.json();
+            // Lot se customer auto-match
+            document.getElementById('lifterPartySelect').value = d.partyId;
+        }
+    } catch (e) { console.error(e); }
 }
 
 function updateLifterTotal() {
