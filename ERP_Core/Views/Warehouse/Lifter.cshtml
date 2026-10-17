@@ -5,19 +5,23 @@
     ViewData["SubTitle"] = "Track daily forklift / lifter service usage and party billing.";
 }
 
-<div class="toolbar">
+<!-- Top Toolbar -->
+<div class="toolbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
     <div style="display:flex;gap:10px;align-items:center;">
-        <button type="button" class="btn brass" onclick="toggleLifterModal()">
-            <i class="fa fa-plus me-1"></i> Add Lifter Job / Usage
+        <button type="button" class="btn brass" onclick="toggleLifterModal()" style="padding:9px 18px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fa fa-plus"></i> Add Lifter Job / Usage
         </button>
-        <a asp-action="Billing" class="btn" style="background:var(--surface2);color:var(--text);">
-            <i class="fa fa-file-invoice-dollar me-1"></i> Monthly Rent & Lifter Billing
+        <a asp-action="Billing" class="btn" style="background:var(--surface2);color:var(--text);padding:9px 16px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fa fa-file-invoice-dollar"></i> Monthly Rent & Lifter Billing
+        </a>
+        <a asp-controller="LifterRate" asp-action="Index" class="btn" style="background:var(--surface2);color:var(--brass);padding:9px 16px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fa fa-cogs"></i> Lifter Rate Setup
         </a>
     </div>
 
     <!-- Filter Form -->
-    <form method="get" asp-action="Lifter" style="display:flex;gap:10px;align-items:center;">
-        <select name="partyId" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
+    <form method="get" asp-action="Lifter" style="display:flex;gap:10px;align-items:center;margin:0;">
+        <select name="partyId" style="padding:8px 14px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12.5px;" onchange="this.form.submit()">
             <option value="">-- All Parties --</option>
             @if (ViewBag.Parties != null)
             {
@@ -27,7 +31,7 @@
                 }
             }
         </select>
-        <select name="status" style="padding:7px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12px;" onchange="this.form.submit()">
+        <select name="status" style="padding:8px 14px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:12.5px;" onchange="this.form.submit()">
             <option value="All" selected="@(ViewBag.SelectedStatus == "All" ? "selected" : null)">All Usages</option>
             <option value="Unbilled" selected="@(ViewBag.SelectedStatus == "Unbilled" ? "selected" : null)">Unbilled Only (Pending)</option>
             <option value="Billed" selected="@(ViewBag.SelectedStatus == "Billed" ? "selected" : null)">Billed Only</option>
@@ -48,26 +52,71 @@
     </div>
 }
 
-<!-- Add Lifter Entry Form -->
-<div class="form-card" id="lifterEntryForm" style="display:none;background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;margin-bottom:20px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <h4 style="color:var(--brass);font-size:15px;font-weight:600;margin:0;">
-            <i class="fa fa-pallet me-1"></i> Record Lifter / Forklift Service
+<!-- Summary Stats Cards -->
+@{
+    int totalCount = Model?.Count ?? 0;
+    decimal totalQty = Model?.Sum(m => m.QuantityOrHours) ?? 0;
+    decimal totalRevenue = Model?.Sum(m => m.TotalAmount) ?? 0;
+    decimal pendingAmount = Model?.Where(m => m.BilledStatus == "Unbilled").Sum(m => m.TotalAmount) ?? 0;
+}
+<div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:14px;margin-bottom:20px;">
+    <div style="background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 18px;">
+        <div style="font-size:11.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Total Usages</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text);margin-top:4px;">@totalCount <span style="font-size:12px;color:var(--text-dim);font-weight:400;">jobs</span></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 18px;">
+        <div style="font-size:11.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Hours / Qty Logged</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text);margin-top:4px;">@totalQty.ToString("N1")</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 18px;">
+        <div style="font-size:11.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Total Amount</div>
+        <div style="font-size:20px;font-weight:700;color:var(--brass);margin-top:4px;">Rs @totalRevenue.ToString("N0")</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 18px;">
+        <div style="font-size:11.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">Pending (Unbilled)</div>
+        <div style="font-size:20px;font-weight:700;color:var(--amber-text, #f59e0b);margin-top:4px;">Rs @pendingAmount.ToString("N0")</div>
+    </div>
+</div>
+
+<!-- Add Lifter Entry Form (Clean Symmetrical Grid) -->
+<div class="form-card" id="lifterEntryForm" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;margin-bottom:24px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;border-bottom:1px solid var(--border-soft);padding-bottom:12px;">
+        <h4 style="color:var(--brass);font-size:15px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px;">
+            <i class="fa fa-pallet"></i> Record Lifter / Forklift Service
         </h4>
-        <button type="button" class="btn" onclick="toggleLifterModal()" style="padding:4px 8px;font-size:11px;background:transparent;color:var(--text-dim);">&times; Close</button>
+        <button type="button" class="btn" onclick="toggleLifterModal()" style="padding:4px 10px;font-size:12px;background:var(--surface2);color:var(--text-dim);border:none;border-radius:4px;">&times; Close</button>
     </div>
 
     <form asp-action="CreateLifterUsage" method="post">
         @Html.AntiForgeryToken()
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;">
+        
+        <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:16px;">
+            <!-- Row 1: Date & Lot / Party -->
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Usage Date *</label>
-                <input type="date" name="UsageDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+                <label style="font-size:12px;font-weight:500;color:var(--text-dim);margin-bottom:6px;display:block;">Usage Date *</label>
+                <input type="date" name="UsageDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required style="width:100%;height:38px;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;box-sizing:border-box;" />
             </div>
 
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Party *</label>
-                <select name="PartyId" id="lifterPartySelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                <label style="font-size:12px;font-weight:500;color:var(--text-dim);margin-bottom:6px;display:block;">Associated Lot *</label>
+                <select name="LotId" id="lifterLotSelect" required onchange="onLifterLotSelected()" style="width:100%;height:38px;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;box-sizing:border-box;">
+                    <option value="">-- Select Lot --</option>
+                    @if (ViewBag.ActiveLots != null)
+                    {
+                        foreach (var l in ViewBag.ActiveLots)
+                        {
+                            <option value="@l.LotId">@l.LotNo (@(string.IsNullOrEmpty(l.PartyName) ? "No Party" : l.PartyName)) — @(string.IsNullOrEmpty(l.ProductName) ? "Item" : l.ProductName)</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="field">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <label style="font-size:12px;font-weight:500;color:var(--text-dim);margin:0;">Party / Customer *</label>
+                    <span style="font-size:11px;color:var(--brass);">(Auto-matched from lot)</span>
+                </div>
+                <select name="PartyId" id="lifterPartySelect" required style="width:100%;height:38px;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;box-sizing:border-box;">
                     <option value="">-- Select Party --</option>
                     @if (ViewBag.Parties != null)
                     {
@@ -77,44 +126,36 @@
                         }
                     }
                 </select>
-                <span style="font-size:10.5px;color:var(--text-dim);">Party will be set automatically when lot is selected</span>
             </div>
 
+            <!-- Row 2: Equipment & Pricing -->
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Associated Lot *</label>
-                <select name="LotId" id="lifterLotSelect" required onchange="onLifterLotSelected()" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
-                    <option value="">-- Select Lot --</option>
-                    @if (ViewBag.ActiveLots != null)
-                    {
-                        foreach (var l in ViewBag.ActiveLots)
-                        {
-                            <option value="@l.LotId">@l.LotNo (@l.PartyName) — @l.ProductName</option>
-                        }
-                    }
-                </select>
-            </div>
-
-            <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Equipment *</label>
-                <select name="EquipmentName" id="lifterEquipment" onchange="onLifterRateTypeChanged()" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                    <label style="font-size:12px;font-weight:500;color:var(--text-dim);margin:0;">Equipment / Lifter *</label>
+                    <a href="/LifterRate" target="_blank" style="font-size:11px;color:var(--brass);text-decoration:none;">+ Rates Master</a>
+                </div>
+                <select name="EquipmentName" id="lifterEquipment" onchange="onLifterRateTypeChanged()" required style="width:100%;height:38px;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;box-sizing:border-box;">
                     <option value="">-- Select Lifter --</option>
                 </select>
-                <div style="margin-top:6px;">
-                    <a href="/LifterRate" target="_blank" style="font-size:11px;color:var(--brass);">+ Manage rates (Lifter Rate Master)</a>
-                </div>
             </div>
 
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Rate Type</label>
-                <select id="lifterRateType" onchange="onLifterRateTypeChanged()" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                <label style="font-size:12px;font-weight:500;color:var(--text-dim);margin-bottom:6px;display:block;">Rate Type (Timing) *</label>
+                <select id="lifterRateType" onchange="onLifterRateTypeChanged()" style="width:100%;height:38px;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;box-sizing:border-box;">
                     <option value="Normal">Normal Time</option>
                     <option value="Peak">Peak Time</option>
                 </select>
             </div>
 
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Charging Basis (Type)</label>
-                <select name="UsageType" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;">
+                <label style="font-size:12px;font-weight:500;color:var(--text-dim);margin-bottom:6px;display:block;">Lifter Rate (Rs) * <span style="color:var(--brass);font-weight:400;">(Auto)</span></label>
+                <input type="number" step="any" min="0" name="Rate" id="lifterUnitRate" placeholder="e.g. 1500" required style="width:100%;height:38px;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;box-sizing:border-box;" oninput="updateLifterTotal()" />
+            </div>
+
+            <!-- Row 3: Units & Total Calculation -->
+            <div class="field">
+                <label style="font-size:12px;font-weight:500;color:var(--text-dim);margin-bottom:6px;display:block;">Charging Basis *</label>
+                <select name="UsageType" style="width:100%;height:38px;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;box-sizing:border-box;">
                     <option value="Hours">Hours</option>
                     <option value="Trips">Trips / Vehicles</option>
                     <option value="Lifting">Per Lifting / Pallets</option>
@@ -122,54 +163,58 @@
             </div>
 
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Hours / Trips / Qty *</label>
-                <input type="number" step="any" min="0.5" name="QuantityOrHours" id="lifterQty" value="1" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="updateLifterTotal()" />
+                <label style="font-size:12px;font-weight:500;color:var(--text-dim);margin-bottom:6px;display:block;">Hours / Trips / Qty *</label>
+                <input type="number" step="any" min="0.1" name="QuantityOrHours" id="lifterQty" value="1" required style="width:100%;height:38px;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;box-sizing:border-box;" oninput="updateLifterTotal()" />
             </div>
 
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Lifter Rate (Rs) * <span style="color:var(--brass);font-weight:400;">— auto from rate master</span></label>
-                <input type="number" step="any" min="0" name="Rate" id="lifterUnitRate" placeholder="e.g. 1500" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" oninput="updateLifterTotal()" />
+                <label style="font-size:12px;font-weight:500;color:var(--text-dim);margin-bottom:6px;display:block;">Total Amount (Preview)</label>
+                <input type="text" id="lifterTotalPreview" readonly style="width:100%;height:38px;padding:8px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--brass);color:var(--brass);font-size:14px;font-weight:700;box-sizing:border-box;" value="Rs 0.00" />
             </div>
 
+            <!-- Row 4: Operator & Remarks -->
             <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Total Amount (Preview)</label>
-                <input type="text" id="lifterTotalPreview" readonly style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--brass);font-size:13px;font-weight:700;" value="Rs 0.00" />
+                <label style="font-size:12px;font-weight:500;color:var(--text-dim);margin-bottom:6px;display:block;">Operator / Driver Name</label>
+                <input type="text" name="OperatorName" placeholder="e.g. Aslam" style="width:100%;height:38px;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;box-sizing:border-box;" />
             </div>
 
-            <div class="field">
-                <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Operator / Driver Name</label>
-                <input type="text" name="OperatorName" placeholder="e.g. Aslam" style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
+            <div class="field" style="grid-column: span 2;">
+                <label style="font-size:12px;font-weight:500;color:var(--text-dim);margin-bottom:6px;display:block;">Remarks</label>
+                <input type="text" name="Remarks" placeholder="Internal shifting, container clearance, etc." style="width:100%;height:38px;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;box-sizing:border-box;" />
             </div>
         </div>
 
-        <div class="field" style="margin:14px 0;">
-            <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Remarks</label>
-            <input type="text" name="Remarks" placeholder="Internal shifting, bay clearance, etc." style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" />
-        </div>
-
-        <div style="text-align:right;">
-            <button type="button" class="btn" onclick="toggleLifterModal()" style="background:var(--surface2);color:var(--text);margin-right:8px;">Cancel</button>
-            <button type="submit" class="btn brass" style="padding:8px 24px;">
+        <div style="text-align:right;margin-top:20px;padding-top:14px;border-top:1px solid var(--border-soft);">
+            <button type="button" class="btn" onclick="toggleLifterModal()" style="background:var(--surface2);color:var(--text);padding:9px 18px;margin-right:8px;border-radius:6px;">Cancel</button>
+            <button type="submit" class="btn brass" style="padding:9px 26px;font-weight:600;border-radius:6px;">
                 <i class="fa fa-save me-1"></i> Save Lifter Usage
             </button>
         </div>
     </form>
 </div>
 
-<!-- Table Card -->
+<!-- Table Card (List) -->
 <div class="table-card" style="background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:20px;overflow-x:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h4 style="color:var(--text);font-size:14px;font-weight:600;margin:0;">
+            Lifter Service Usages Log (@(Model?.Count ?? 0) Records)
+        </h4>
+    </div>
+
     <table class="table" style="width:100%;border-collapse:collapse;font-size:12.5px;">
         <thead>
             <tr style="border-bottom:2px solid var(--border);color:var(--text-dim);text-align:left;">
-                <th style="padding:10px 8px;">Date</th>
-                <th style="padding:10px 8px;">Party</th>
-                <th style="padding:10px 8px;">Lot Linked</th>
-                <th style="padding:10px 8px;">Basis</th>
-                <th style="padding:10px 8px;text-align:right;">Hours / Qty</th>
-                <th style="padding:10px 8px;text-align:right;">Rate</th>
-                <th style="padding:10px 8px;text-align:right;">Total Amount</th>
-                <th style="padding:10px 8px;">Operator</th>
-                <th style="padding:10px 8px;text-align:center;">Billing Status</th>
+                <th style="padding:10px 10px;text-align:left;">Date</th>
+                <th style="padding:10px 10px;text-align:left;">Party / Customer</th>
+                <th style="padding:10px 10px;text-align:left;">Lot Linked</th>
+                <th style="padding:10px 10px;text-align:left;">Equipment</th>
+                <th style="padding:10px 10px;text-align:center;">Basis</th>
+                <th style="padding:10px 10px;text-align:right;">Hours / Qty</th>
+                <th style="padding:10px 10px;text-align:right;">Rate</th>
+                <th style="padding:10px 10px;text-align:right;">Total Amount</th>
+                <th style="padding:10px 10px;text-align:left;">Operator</th>
+                <th style="padding:10px 10px;text-align:center;">Billing Status</th>
+                <th style="padding:10px 10px;text-align:center;">Action</th>
             </tr>
         </thead>
         <tbody>
@@ -178,22 +223,49 @@
                 foreach (var item in Model)
                 {
                     <tr style="border-bottom:1px solid var(--border-soft);">
-                        <td style="padding:10px 8px;">@item.UsageDate.ToString("dd-MMM-yyyy")</td>
-                        <td style="padding:10px 8px;font-weight:600;">@(item.Party?.Name ?? "N/A")</td>
-                        <td style="padding:10px 8px;color:var(--brass);">@(item.Lot?.LotNo ?? "General")</td>
-                        <td style="padding:10px 8px;">@item.UsageType</td>
-                        <td style="padding:10px 8px;text-align:right;font-weight:600;">@item.QuantityOrHours.ToString("N1")</td>
-                        <td style="padding:10px 8px;text-align:right;">Rs @item.Rate.ToString("N0")</td>
-                        <td style="padding:10px 8px;text-align:right;font-weight:700;color:var(--brass);">Rs @item.TotalAmount.ToString("N0")</td>
-                        <td style="padding:10px 8px;color:var(--text-dim);">@(item.OperatorName ?? "-")</td>
-                        <td style="padding:10px 8px;text-align:center;">
-                            @if (item.BilledStatus == "Unbilled")
+                        <td style="padding:11px 10px;white-space:nowrap;">@item.UsageDate.ToString("dd-MMM-yyyy")</td>
+                        <td style="padding:11px 10px;font-weight:600;color:var(--text);">@(item.Party?.Name ?? "N/A")</td>
+                        <td style="padding:11px 10px;">
+                            @if (item.Lot != null)
                             {
-                                <span style="background:var(--amber-dim);color:var(--amber-text);padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;">Pending Bill</span>
+                                <span style="color:var(--brass);font-weight:500;">@item.Lot.LotNo</span>
                             }
                             else
                             {
-                                <span style="background:var(--green-dim);color:var(--green-text);padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;">Billed (Bill #@item.BillId)</span>
+                                <span style="color:var(--text-dim);">-</span>
+                            }
+                        </td>
+                        <td style="padding:11px 10px;color:var(--text-dim);">@(string.IsNullOrWhiteSpace(item.EquipmentName) ? "Lifter" : item.EquipmentName)</td>
+                        <td style="padding:11px 10px;text-align:center;">
+                            <span style="background:var(--surface2);padding:2px 8px;border-radius:10px;font-size:11px;">@item.UsageType</span>
+                        </td>
+                        <td style="padding:11px 10px;text-align:right;font-weight:600;">@item.QuantityOrHours.ToString("N1")</td>
+                        <td style="padding:11px 10px;text-align:right;">Rs @item.Rate.ToString("N0")</td>
+                        <td style="padding:11px 10px;text-align:right;font-weight:700;color:var(--brass);">Rs @item.TotalAmount.ToString("N0")</td>
+                        <td style="padding:11px 10px;color:var(--text-dim);">@(item.OperatorName ?? "-")</td>
+                        <td style="padding:11px 10px;text-align:center;white-space:nowrap;">
+                            @if (item.BilledStatus == "Unbilled")
+                            {
+                                <span style="background:var(--amber-dim);color:var(--amber-text);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;">Pending Bill</span>
+                            }
+                            else
+                            {
+                                <span style="background:var(--green-dim);color:var(--green-text);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;">Billed (Bill #@item.BillId)</span>
+                            }
+                        </td>
+                        <td style="padding:11px 10px;text-align:center;white-space:nowrap;">
+                            @if (item.BilledStatus == "Unbilled")
+                            {
+                                <form asp-action="DeleteLifterUsage" asp-route-id="@item.LifterUsageId" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this lifter usage entry?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn" style="padding:3px 8px;font-size:11px;background:transparent;color:var(--red);border:1px solid var(--red);border-radius:4px;" title="Delete Entry">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span style="font-size:11px;color:var(--text-dim);">-</span>
                             }
                         </td>
                     </tr>
@@ -202,8 +274,8 @@
             else
             {
                 <tr>
-                    <td colspan="9" style="padding:24px;text-align:center;color:var(--text-dim);">
-                        No lifter usage records found.
+                    <td colspan="11" style="padding:32px;text-align:center;color:var(--text-dim);">
+                        No lifter usage records found. Click <b>"Add Lifter Job / Usage"</b> above to log a service.
                     </td>
                 </tr>
             }
@@ -219,7 +291,10 @@ function toggleLifterModal() {
     const form = document.getElementById('lifterEntryForm');
     const opening = form.style.display === 'none';
     form.style.display = opening ? 'block' : 'none';
-    if (opening) loadLifterRates();
+    if (opening) {
+        loadLifterRates();
+        form.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 async function loadLifterRates() {
@@ -233,7 +308,7 @@ async function loadLifterRates() {
         lifterRatesCache.forEach(r => {
             const opt = document.createElement('option');
             opt.value = r.equipmentName;
-            opt.textContent = r.equipmentName + ' (N: Rs ' + r.normalRate + ' / P: Rs ' + r.peakRate + ')';
+            opt.textContent = r.equipmentName + ' (Normal: Rs ' + r.normalRate.toLocaleString() + ' / Peak: Rs ' + r.peakRate.toLocaleString() + ')';
             sel.appendChild(opt);
         });
         if (current) sel.value = current;

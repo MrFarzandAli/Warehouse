@@ -448,6 +448,40 @@ namespace ERP_Core.Controllers.Warehouse
             return RedirectToAction(nameof(Lifter));
         }
 
+        [HttpPost]
+        [Route("DeleteLifterUsage/{id}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteLifterUsage(int id)
+        {
+            try
+            {
+                var usage = await _context.WarehouseLifterUsages.FindAsync(id);
+                if (usage == null)
+                {
+                    TempData["ErrorMessage"] = "Record not found.";
+                    return RedirectToAction(nameof(Lifter));
+                }
+
+                if (usage.BilledStatus == "Billed")
+                {
+                    TempData["ErrorMessage"] = "Cannot delete: This lifter charge has already been billed in Monthly Rent Bill #" + usage.BillId;
+                    return RedirectToAction(nameof(Lifter));
+                }
+
+                _context.WarehouseLifterUsages.Remove(usage);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Lifter usage record deleted successfully.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting lifter usage");
+                TempData["ErrorMessage"] = "Error deleting: " + ex.Message;
+            }
+
+            return RedirectToAction(nameof(Lifter));
+        }
+
         // =========================================================================
         // 4. MONTHLY BILLING / ROLLING BILL GENERATOR
         // =========================================================================
