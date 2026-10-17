@@ -45,7 +45,7 @@ namespace ERP_Core.Controllers.ExpenseVoucher
             string? tab = "entry")
         {
             ViewData["Title"] = "Expense Voucher";
-            ViewData["SubTitle"] = "Rozana ke aam kharche darj karein — bill se alag.";
+            ViewData["SubTitle"] = "Record operational expenses and general payment vouchers.";
 
             int companyId = GetCurrentCompanyId();
             int fyId = GetCurrentFinancialYearId();

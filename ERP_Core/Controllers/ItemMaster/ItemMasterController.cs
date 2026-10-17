@@ -40,7 +40,7 @@ namespace ERP_Core.Controllers.ItemMaster
         public async Task<IActionResult> Index(string? search, string? category)
         {
             ViewData["Title"] = "Item Master";
-            ViewData["SubTitle"] = "Warehouse items / products ki list — inward aur billing me yehi items aayenge.";
+            ViewData["SubTitle"] = "Manage warehouse storage items and products used in inward stock and billing.";
             ViewData["ActivePage"] = "ItemMaster";
 
             int companyId = GetCurrentCompanyId();
@@ -91,7 +91,7 @@ namespace ERP_Core.Controllers.ItemMaster
             {
                 if (string.IsNullOrWhiteSpace(model.Name))
                 {
-                    TempData["ErrorMessage"] = "Item Name zaroori hai!";
+                    TempData["ErrorMessage"] = "Item Name is required.";
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -100,7 +100,7 @@ namespace ERP_Core.Controllers.ItemMaster
                     var existing = await _context.WarehouseItems.FindAsync(model.Id);
                     if (existing == null)
                     {
-                        TempData["ErrorMessage"] = "Item nahi mila!";
+                        TempData["ErrorMessage"] = "Item not found.";
                         return RedirectToAction(nameof(Index));
                     }
 
@@ -113,7 +113,7 @@ namespace ERP_Core.Controllers.ItemMaster
                     existing.ModifiedBy = userName;
                     existing.ModifiedOn = DateTime.Now;
 
-                    TempData["SuccessMessage"] = $"Item '{existing.Name}' update ho gaya.";
+                    TempData["SuccessMessage"] = $"Item '{existing.Name}' updated successfully.";
                 }
                 else
                 {
@@ -134,7 +134,7 @@ namespace ERP_Core.Controllers.ItemMaster
                     model.CreatedOn = DateTime.Now;
 
                     await _context.WarehouseItems.AddAsync(model);
-                    TempData["SuccessMessage"] = $"Item '{model.Name}' add ho gaya.";
+                    TempData["SuccessMessage"] = $"Item '{model.Name}' added successfully.";
                 }
 
                 await _context.SaveChangesAsync();
@@ -142,7 +142,7 @@ namespace ERP_Core.Controllers.ItemMaster
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving warehouse item");
-                TempData["ErrorMessage"] = "Save karne me masla: " + ex.Message;
+                TempData["ErrorMessage"] = "Error saving warehouse item: " + ex.Message;
             }
 
             return RedirectToAction(nameof(Index));
@@ -183,7 +183,7 @@ namespace ERP_Core.Controllers.ItemMaster
                 var item = await _context.WarehouseItems.FindAsync(id);
                 if (item == null)
                 {
-                    TempData["ErrorMessage"] = "Item nahi mila!";
+                    TempData["ErrorMessage"] = "Item not found.";
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -191,7 +191,7 @@ namespace ERP_Core.Controllers.ItemMaster
                 bool inUse = await _context.WarehouseLots.AnyAsync(l => l.ProductId == id);
                 if (inUse)
                 {
-                    TempData["ErrorMessage"] = $"Item '{item.Name}' kisi lot me use ho chuka hai — delete nahi ho sakta. Inactive kar dein.";
+                    TempData["ErrorMessage"] = $"Item '{item.Name}' is linked to active lots and cannot be deleted. Deactivate it instead.";
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -200,12 +200,12 @@ namespace ERP_Core.Controllers.ItemMaster
                 item.ModifiedOn = DateTime.Now;
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = $"Item '{item.Name}' inactive kar diya gaya.";
+                TempData["SuccessMessage"] = $"Item '{item.Name}' deactivated successfully.";
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting warehouse item");
-                TempData["ErrorMessage"] = "Delete me masla: " + ex.Message;
+                TempData["ErrorMessage"] = "Error deleting warehouse item: " + ex.Message;
             }
 
             return RedirectToAction(nameof(Index));

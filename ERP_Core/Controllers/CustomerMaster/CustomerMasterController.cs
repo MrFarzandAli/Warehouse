@@ -30,7 +30,7 @@ namespace ERP_Core.Controllers.CustomerMaster
         public async Task<IActionResult> Index()
         {
             ViewData["Title"] = "Customer Master";
-            ViewData["SubTitle"] = "Customers, hotels aur buyers manage karein.";
+            ViewData["SubTitle"] = "Manage warehouse clients, customers, and parties.";
 
             int companyId = HttpContext.Session.GetInt32("CompanyId") ?? 1;
             var vendors = await _vendorService.GetVendorsAsync(VendorType.Customer, companyId);

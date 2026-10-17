@@ -40,7 +40,7 @@ namespace ERP_Core.Controllers.IncomeReport
         public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, int? partyId, string? status)
         {
             ViewData["Title"] = "Income Report";
-            ViewData["SubTitle"] = "Warehouse ki aamdani — monthly rent bills aur lifter charges, party-wise.";
+            ViewData["SubTitle"] = "Warehouse revenue statement — monthly storage rent bills and lifter charges.";
             ViewData["ActivePage"] = "IncomeReport";
 
             int companyId = GetCurrentCompanyId();

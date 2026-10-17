@@ -42,7 +42,7 @@ namespace ERP_Core.Controllers.VoucherReport
             int? accountId)
         {
             ViewData["Title"] = "Voucher Report";
-            ViewData["SubTitle"] = "BP, CP, BR, CR aur JV vouchers ka tafseeli statement aur double-entry record.";
+            ViewData["SubTitle"] = "Comprehensive statements and double-entry transaction records for BP, CP, BR, CR, and JV vouchers.";
 
             int companyId = HttpContext.Session.GetInt32("CompanyId") ?? 1;
 

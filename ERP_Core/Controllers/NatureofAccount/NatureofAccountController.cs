@@ -32,7 +32,7 @@ namespace ERP_Core.Controllers.NatureofAccount
         public async Task<IActionResult> Index(string? search, string? type)
         {
             ViewData["Title"] = "Nature of Account Master";
-            ViewData["SubTitle"] = "Debtors (D) aur Creditors (C) ki classification aur account nature manage karein.";
+            ViewData["SubTitle"] = "Manage chart of accounts classification, nature, and types.";
             ViewData["ActivePage"] = "NatureofAccount";
 
             try

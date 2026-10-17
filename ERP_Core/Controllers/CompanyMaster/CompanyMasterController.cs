@@ -34,7 +34,7 @@ namespace ERP_Core.Controllers.CompanyMaster
         public async Task<IActionResult> Index(string? search, string? status)
         {
             ViewData["Title"] = "Company Master";
-            ViewData["SubTitle"] = "Aap ki company ki bunyadi tafseelaat — branches, contact aur profile records manage karein.";
+            ViewData["SubTitle"] = "Manage company profile, branches, and contact information.";
             ViewData["ActivePage"] = "CompanyMaster";
 
             try

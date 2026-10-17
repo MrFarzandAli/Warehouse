@@ -265,7 +265,7 @@ namespace ERP_Core.Controllers.CustomerReceivable
                         Credit = credit,
                         Balance = bal,
                         OutstandingBalance = outstandingBal,
-                        TransactionType = debit > 0 ? "Sale / Bill" : (credit > 0 ? "Receipt / Wasooli" : "Adjustment")
+                        TransactionType = debit > 0 ? "Sale / Bill" : (credit > 0 ? "Receipt / Payment" : "Adjustment")
                     });
                 }
 

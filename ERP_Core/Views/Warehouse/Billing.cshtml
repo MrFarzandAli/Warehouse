@@ -64,7 +64,7 @@
             <div class="field">
                 <label style="font-size:11.5px;color:var(--text-dim);margin-bottom:4px;display:block;">Select Customer *</label>
                 <select name="PartyId" id="billPartySelect" required style="width:100%;padding:8px 12px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:13px;" onchange="onPartyChangeForBilling()">
-                    <option value="">-- Customer Select Karein --</option>
+                    <option value="">-- Select Customer --</option>
                     @if (ViewBag.Parties != null)
                     {
                         foreach (var p in ViewBag.Parties)

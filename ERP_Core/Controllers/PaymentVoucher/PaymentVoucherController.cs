@@ -45,7 +45,7 @@ namespace ERP_Core.Controllers.PaymentVoucher
             string? tab = "entry")
         {
             ViewData["Title"] = "Payment Voucher";
-            ViewData["SubTitle"] = "Cash ya Bank ke zariye adaigi darj karein — baqaida double-entry voucher.";
+            ViewData["SubTitle"] = "Record cash and bank payments with automated double-entry voucher posting.";
 
             int companyId = GetCurrentCompanyId();
             int fyId = GetCurrentFinancialYearId();

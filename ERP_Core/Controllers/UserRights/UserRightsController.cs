@@ -34,7 +34,7 @@ namespace ERP_Core.Controllers.UserRights
         public async Task<IActionResult> Index()
         {
             ViewData["Title"] = "User Rights";
-            ViewData["SubTitle"] = "Staff accounts aur unki permissions manage karein.";
+            ViewData["SubTitle"] = "Manage staff accounts, roles, and system access permissions.";
 
             var userDtos = new List<StaffUserDto>();
             try

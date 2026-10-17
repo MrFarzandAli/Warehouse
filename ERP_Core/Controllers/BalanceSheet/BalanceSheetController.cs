@@ -16,7 +16,7 @@ namespace ERP_Core.Controllers.BalanceSheet
         public IActionResult Index(string? asOnDate)
         {
             ViewData["Title"] = "Balance Sheet";
-            ViewData["SubTitle"] = "Assets, liabilities aur equity ka balance hisaab.";
+            ViewData["SubTitle"] = "Balance sheet statement of assets, liabilities, and equity.";
 
             var model = new BalanceSheetViewModel
             {

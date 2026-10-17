@@ -35,7 +35,7 @@ namespace ERP_Core.Controllers.AccountLedger
         public async Task<IActionResult> Index(int? accountId, string? account, string? fromDate, string? toDate)
         {
             ViewData["Title"] = "Account Ledger";
-            ViewData["SubTitle"] = "Khaata aur hisaab kitaab ka tafseeli statement.";
+            ViewData["SubTitle"] = "Detailed account ledger statement and transaction history.";
 
             // 1. Resolve Company and Financial Year from Session & Claims
             int companyId = HttpContext.Session.GetInt32("CompanyId") ?? 1;
@@ -140,7 +140,7 @@ namespace ERP_Core.Controllers.AccountLedger
 
                 if (selectedAcc == null)
                 {
-                    TempData["ErrorMessage"] = "Muntakhib kardah account nahi mila.";
+                    TempData["ErrorMessage"] = "Selected account not found.";
                     return View(model);
                 }
 

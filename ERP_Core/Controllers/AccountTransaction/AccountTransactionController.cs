@@ -39,7 +39,7 @@ namespace ERP_Core.Controllers.AccountTransactions
             int? accountId)
         {
             ViewData["Title"] = "Account Summary";
-            ViewData["SubTitle"] = "Advances, Martey, Loans, Commissions, Expenses aur Other dues ka mukammal party-wise summary record.";
+            ViewData["SubTitle"] = "Comprehensive party-wise summary of Advances, Loans, Commissions, Expenses, and Other dues.";
 
             int companyId = HttpContext.Session.GetInt32("CompanyId") ?? 1;
 
@@ -66,13 +66,13 @@ namespace ERP_Core.Controllers.AccountTransactions
             // 1. Populate Types Dropdown
             model.AvailableTypes = new List<SelectListItem>
             {
-                new SelectListItem { Text = "All Types (تمام اقسام)", Value = "All", Selected = normalizedType.Equals("All", StringComparison.OrdinalIgnoreCase) },
-                new SelectListItem { Text = "Advances (پیشگی)", Value = "Advance", Selected = normalizedType.Equals("Advance", StringComparison.OrdinalIgnoreCase) },
-                new SelectListItem { Text = "Martey (مارتی)", Value = "Martey", Selected = normalizedType.Equals("Martey", StringComparison.OrdinalIgnoreCase) },
-                new SelectListItem { Text = "Loans (قرضہ)", Value = "Loan", Selected = normalizedType.Equals("Loan", StringComparison.OrdinalIgnoreCase) },
-                new SelectListItem { Text = "Other Dues (دیگر بقایا)", Value = "Other", Selected = normalizedType.Equals("Other", StringComparison.OrdinalIgnoreCase) },
-                new SelectListItem { Text = "Commissions (کمیشن)", Value = "Commission", Selected = normalizedType.Equals("Commission", StringComparison.OrdinalIgnoreCase) },
-                new SelectListItem { Text = "Expenses (اخراجات)", Value = "Expense", Selected = normalizedType.Equals("Expense", StringComparison.OrdinalIgnoreCase) }
+                new SelectListItem { Text = "All Types", Value = "All", Selected = normalizedType.Equals("All", StringComparison.OrdinalIgnoreCase) },
+                new SelectListItem { Text = "Advances", Value = "Advance", Selected = normalizedType.Equals("Advance", StringComparison.OrdinalIgnoreCase) },
+                new SelectListItem { Text = "Martey", Value = "Martey", Selected = normalizedType.Equals("Martey", StringComparison.OrdinalIgnoreCase) },
+                new SelectListItem { Text = "Loans", Value = "Loan", Selected = normalizedType.Equals("Loan", StringComparison.OrdinalIgnoreCase) },
+                new SelectListItem { Text = "Other Dues", Value = "Other", Selected = normalizedType.Equals("Other", StringComparison.OrdinalIgnoreCase) },
+                new SelectListItem { Text = "Commissions", Value = "Commission", Selected = normalizedType.Equals("Commission", StringComparison.OrdinalIgnoreCase) },
+                new SelectListItem { Text = "Expenses", Value = "Expense", Selected = normalizedType.Equals("Expense", StringComparison.OrdinalIgnoreCase) }
             };
 
             try

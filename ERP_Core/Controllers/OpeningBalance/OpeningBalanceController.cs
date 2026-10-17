@@ -36,7 +36,7 @@ namespace ERP_Core.Controllers.OpeningBalance
         public async Task<IActionResult> Index(int? id, int? fyId)
         {
             ViewData["Title"] = "Opening Balance";
-            ViewData["SubTitle"] = "Chart of Accounts ke ibtidayi khate (opening balance) darj karein.";
+            ViewData["SubTitle"] = "Record opening balances for chart of accounts.";
             ViewData["ActivePage"] = "OpeningBalance";
 
             try

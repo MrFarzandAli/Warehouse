@@ -16,7 +16,7 @@ namespace ERP_Core.Controllers.ProfitLoss
         public IActionResult Index(string? from, string? to)
         {
             ViewData["Title"] = "Profit & Loss";
-            ViewData["SubTitle"] = "Mandi karobaar ka nafa aur nuqsaan statement.";
+            ViewData["SubTitle"] = "Profit and loss statement of revenue and expenses.";
 
             var model = new ProfitLossViewModel
             {

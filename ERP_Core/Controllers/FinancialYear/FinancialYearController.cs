@@ -37,7 +37,7 @@ namespace ERP_Core.Controllers.FinancialYear
         public async Task<IActionResult> Index(string? search, int? companyId, string? status)
         {
             ViewData["Title"] = "Financial Year Master";
-            ViewData["SubTitle"] = "Mali saal ke doraniye, live status aur books locking manage karein.";
+            ViewData["SubTitle"] = "Manage financial year periods, active status, and accounting books locking.";
             ViewData["ActivePage"] = "FinancialYear";
 
             try

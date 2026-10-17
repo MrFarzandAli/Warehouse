@@ -40,7 +40,7 @@ namespace ERP_Core.Controllers.LifterRate
         public async Task<IActionResult> Index()
         {
             ViewData["Title"] = "Lifter Rates";
-            ViewData["SubTitle"] = "Har lifter ka normal aur peak time rate yahan set karein — entry form yahin se rate uthayega.";
+            ViewData["SubTitle"] = "Configure standard normal and peak hourly rates for lifters and forklifts.";
             ViewData["ActivePage"] = "LifterRates";
 
             int companyId = GetCurrentCompanyId();
@@ -66,7 +66,7 @@ namespace ERP_Core.Controllers.LifterRate
             {
                 if (string.IsNullOrWhiteSpace(model.EquipmentName))
                 {
-                    TempData["ErrorMessage"] = "Equipment name zaroori hai!";
+                    TempData["ErrorMessage"] = "Equipment name is required.";
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -75,7 +75,7 @@ namespace ERP_Core.Controllers.LifterRate
                     var existing = await _context.LifterRates.FindAsync(model.Id);
                     if (existing == null)
                     {
-                        TempData["ErrorMessage"] = "Rate nahi mila!";
+                        TempData["ErrorMessage"] = "Rate not found.";
                         return RedirectToAction(nameof(Index));
                     }
 
@@ -89,7 +89,7 @@ namespace ERP_Core.Controllers.LifterRate
                     existing.ModifiedBy = userName;
                     existing.ModifiedOn = DateTime.Now;
 
-                    TempData["SuccessMessage"] = $"'{existing.EquipmentName}' ka rate update ho gaya.";
+                    TempData["SuccessMessage"] = $"Lifter rate for '{existing.EquipmentName}' updated successfully.";
                 }
                 else
                 {
@@ -101,7 +101,7 @@ namespace ERP_Core.Controllers.LifterRate
                     model.CreatedOn = DateTime.Now;
 
                     await _context.LifterRates.AddAsync(model);
-                    TempData["SuccessMessage"] = $"'{model.EquipmentName}' ka rate add ho gaya.";
+                    TempData["SuccessMessage"] = $"Lifter rate for '{model.EquipmentName}' added successfully.";
                 }
 
                 await _context.SaveChangesAsync();
@@ -109,7 +109,7 @@ namespace ERP_Core.Controllers.LifterRate
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error saving lifter rate");
-                TempData["ErrorMessage"] = "Save karne me masla: " + ex.Message;
+                TempData["ErrorMessage"] = "Error saving lifter rate: " + ex.Message;
             }
 
             return RedirectToAction(nameof(Index));
@@ -144,7 +144,7 @@ namespace ERP_Core.Controllers.LifterRate
                 var r = await _context.LifterRates.FindAsync(id);
                 if (r == null)
                 {
-                    TempData["ErrorMessage"] = "Rate nahi mila!";
+                    TempData["ErrorMessage"] = "Rate not found.";
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -153,12 +153,12 @@ namespace ERP_Core.Controllers.LifterRate
                 r.ModifiedOn = DateTime.Now;
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = $"'{r.EquipmentName}' inactive kar diya gaya.";
+                TempData["SuccessMessage"] = $"'{r.EquipmentName}' deactivated successfully.";
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting lifter rate");
-                TempData["ErrorMessage"] = "Delete me masla: " + ex.Message;
+                TempData["ErrorMessage"] = "Error deleting lifter rate: " + ex.Message;
             }
 
             return RedirectToAction(nameof(Index));
