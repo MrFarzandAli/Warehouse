@@ -386,7 +386,12 @@ namespace ERP_Core.Controllers.Warehouse
             ViewBag.ActiveLots = await _context.WarehouseLots
                 .Where(l => l.CompanyId == companyId && l.Status == "Active")
                 .OrderByDescending(l => l.LotId)
-                .Select(l => new { l.LotId, l.LotNo, PartyName = l.Party != null ? l.Party.Name : "" })
+                .Select(l => new {
+                    l.LotId,
+                    l.LotNo,
+                    PartyName = l.Party != null ? l.Party.Name : "",
+                    ProductName = l.Product != null ? l.Product.Name : ""
+                })
                 .ToListAsync();
 
             ViewBag.SelectedStatus = status ?? "All";
